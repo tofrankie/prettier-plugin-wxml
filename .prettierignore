@@ -1,2 +1,2 @@
-tests/fixtures/**
+tests/fixtures/**/*.wxml
 pnpm-lock.yaml

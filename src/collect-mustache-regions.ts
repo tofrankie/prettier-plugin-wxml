@@ -10,6 +10,10 @@ export function hasFatalHtmlParseErrors(result: ReturnType<typeof parseHtml>): b
   return result.errors.some(e => e.level === HTML_FATAL_ERROR_LEVEL)
 }
 
+/**
+ * 基于 angular-html-parser 提取整份 source 内所有 mustache 绝对区间。
+ * @param source 完整 WXML 源码
+ */
 export function collectMustacheRegions(source: string): MustacheRegion[] {
   const result = parseHtml(source)
   if (hasFatalHtmlParseErrors(result)) {
@@ -68,6 +72,10 @@ class MustacheRegionCollector extends RecursiveVisitor {
     }
   }
 
+  /**
+   * 通过属性值源码片段首尾字符判断属性外层引号类型。
+   * @param span 属性值在源文本中的区间（通常含引号）
+   */
   private detectAttributeQuote(span: ParseSourceSpan): '"' | "'" | null {
     const start = span.start.offset
     const end = span.end.offset

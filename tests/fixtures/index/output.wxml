@@ -52,7 +52,7 @@
 <text>{{ (a === b && c) || d }}</text>
 <view data-arith="{{ a + b * c - ((d / e) % 3) }}"></view>
 <view data-logic="{{ (a === b && c) || d }}"></view>
-<view>{{ "hello" + name }}</view>
+<view>{{ 'hello' + name }}</view>
 
 <!-- 一元与括号 -->
 <text>{{ !flag }}</text>
@@ -86,22 +86,22 @@
 
 <!-- 函数调用与箭头函数 -->
 <text>{{ fn(a, b) }}</text>
-<text>{{ list.map((x) => x + 1) }}</text>
+<text>{{ list.map(x => x + 1) }}</text>
 <view data-call="{{ fn(a, b) }}"></view>
-<view data-arrow="{{ list.map((x) => x + 1) }}"></view>
+<view data-arrow="{{ list.map(x => x + 1) }}"></view>
 
 <!-- 已规范输入应保持稳定 -->
 <text>{{ user.name }}</text>
 <view data-stable="{{ user.name }}"></view>
 
 <!-- 字符串内含 `}}`（状态机须完整提取，非贪婪正则会截断） -->
-<text>{{ "a}}" }}</text>
-<text>{{ "a}}" }}</text>
+<text>{{ 'a}}' }}</text>
+<text>{{ 'a}}' }}</text>
 <view data-str-rbrace='{{ "a}}" }}'></view>
 <view data-str-rbrace="{{ 'a}}' }}"></view>
 
 <!-- 字符串内含 `{{` -->
-<text>{{ "{{x}}" }}</text>
+<text>{{ '{{x}}' }}</text>
 <view data-str-brace="{{ '{{x}}' }}"></view>
 
 <!-- 注释内 `{{}}` 不处理；下一行正文照常处理 -->
@@ -133,3 +133,14 @@
 <view hidden="{{ flag ? true : false }}"></view>
 <custom-component custom-props></custom-component>
 <custom-component custom-props hidden="{{ !flag }}"></custom-component>
+
+<!-- 避免插槽值换行，导致小程序无法解析 WXML -->
+<image
+  class="icon"
+  src="{{ flag ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}"
+/>
+
+<!-- 文本节点插值换行，这是允许的 -->
+<view>{{ flag
+  ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'
+  : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}<view>

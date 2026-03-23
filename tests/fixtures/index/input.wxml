@@ -133,3 +133,14 @@
 <view hidden="{{flag ? true : false}}"></view>
 <custom-component custom-props></custom-component>
 <custom-component custom-props hidden="{{!flag}}"></custom-component>
+
+<!-- 避免插槽值换行，导致小程序无法解析 WXML -->
+<image
+  class="icon"
+  src="{{ flag
+  ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'
+  : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}"
+/>
+
+<!-- 文本节点插值换行，这是允许的 -->
+<view>{{ flag ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}<view>

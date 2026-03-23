@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import baseOptions from '@tofrankie/prettier'
 import * as prettier from 'prettier'
 import { describe, expect, it, vi } from 'vitest'
 import plugin from '../src/index.js'
@@ -12,6 +13,7 @@ async function format(
   opts: { filepath?: string; wxmlThrowOnError?: boolean; wxmlReportLevel?: 'silent' | 'warn' } = {}
 ) {
   return prettier.format(source, {
+    ...baseOptions,
     parser: 'wxml',
     plugins: [plugin],
     filepath: opts.filepath ?? 'test.wxml',
@@ -110,7 +112,7 @@ describe('prettier-plugin-wxml', () => {
   it('函数与箭头函数', async () => {
     expect(await format('{{fn(a,b)}}')).toMatchInlineSnapshot('"{{ fn(a, b) }}"')
     expect(await format('{{list.map(x=>x+1)}}')).toMatchInlineSnapshot(
-      '"{{ list.map((x) => x + 1) }}"'
+      '"{{ list.map(x => x + 1) }}"'
     )
   })
 
@@ -122,13 +124,13 @@ describe('prettier-plugin-wxml', () => {
   it('字符串内 }} 不误截断', async () => {
     const s = '{{ "a}}" }}'
     expect(await format(s)).toMatchInlineSnapshot(`
-      "{{ "a}}" }}"
+      "{{ 'a}}' }}"
     `)
   })
 
   it('字符串内 {{', async () => {
     const s = `{{ '{{x}}' }}`
-    expect(await format(s)).toMatchInlineSnapshot('"{{ "{{x}}" }}"')
+    expect(await format(s)).toMatchInlineSnapshot('"{{ \'{{x}}\' }}"')
   })
 
   it('注释内插值不处理', async () => {
@@ -214,6 +216,24 @@ describe('prettier-plugin-wxml', () => {
     expect(warn).toHaveBeenCalled()
     expect(String(warn.mock.calls[0]?.[0])).toContain('partial')
     expect(String(warn.mock.calls[0]?.[0])).toContain('x1')
+    warn.mockRestore()
+  })
+
+  it('wxmlReportLevel=warn：非法表达式与语句类插值都会计入失败数', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const source = `
+<text>{{foo+}}</text>
+<view data-bad="{{foo+}}"></view>
+<text>{{ if (a) b }}</text>
+<text>{{ return a }}</text>
+<view data-stmt-if="{{ if (a) b }}"></view>
+<view data-stmt-ret="{{ return a }}"></view>
+`.trim()
+    await format(source, { filepath: 'warn-invalid.wxml', wxmlReportLevel: 'warn' })
+    expect(warn).toHaveBeenCalled()
+    expect(String(warn.mock.calls[0]?.[0])).toContain('partial')
+    expect(String(warn.mock.calls[0]?.[0])).toContain('warn-invalid.wxml')
+    expect(String(warn.mock.calls[0]?.[0])).toContain('x6')
     warn.mockRestore()
   })
 

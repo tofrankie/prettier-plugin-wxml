@@ -15,7 +15,7 @@ const MUSTACHE_SCAN_STATE = {
 /**
  * 在一段节点内容内提取 `{{`…`}}` 区间（相对 content 的偏移）。
  * 使用状态机，避免字符串字面量内的 `}}` 被误当作闭合。
- * @param content
+ * @param content 节点文本或属性值文本（局部字符串）
  */
 export function extractMustacheRegions(content: string): MustacheRegion[] {
   const regions: MustacheRegion[] = []
