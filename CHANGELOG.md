@@ -1,5 +1,10 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.3 (2026-03-24)
+
+- 修复插值表达式换行问题，避免格式化后小程序无法解析 WXML
+- 更多测试用例
+
 ## prettier-plugin-wxml@0.0.2 (2026-03-23)
 
 - 修复插件导出形态，兼容 `plugins: [require.resolve('@tofrankie/prettier-plugin-wxml')]` + `parser: 'wxml'` 的加载方式
