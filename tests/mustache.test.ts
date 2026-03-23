@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { extractMustacheRegions } from '../src/interpolation.js'
+import { extractMustacheRegions } from '../src/mustache.js'
 
 describe('extractMustacheRegions', () => {
-  it('单个插值，区间含一对花括号', () => {
+  it('单个 mustache，区间含一对花括号', () => {
     expect(extractMustacheRegions('a{{ x }}b')).toEqual([{ start: 1, end: 8 }])
   })
 
   // 与单行 `{{a}}{{b}}`、属性 `data="{{a}}{{b}}"` 的 value 片段扫描方式相同
-  it('同一内容内多个插值', () => {
+  it('同一内容内多个 mustache', () => {
     expect(extractMustacheRegions('{{a}}{{b}}')).toEqual([
       { start: 0, end: 5 },
       { start: 5, end: 10 },
     ])
   })
 
-  it('文本中与字面量相间的多个插值', () => {
+  it('文本中与字面量相间的多个 mustache', () => {
     expect(extractMustacheRegions('a{{x}}b{{y}}c')).toEqual([
       { start: 1, end: 6 },
       { start: 7, end: 12 },

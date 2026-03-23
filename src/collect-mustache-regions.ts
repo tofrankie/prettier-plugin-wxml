@@ -1,7 +1,7 @@
 import type { Ast, ParseSourceSpan } from 'angular-html-parser'
-import type { MustacheRegion } from './interpolation'
+import type { MustacheRegion } from './mustache'
 import { parseHtml, RecursiveVisitor, visitAll } from 'angular-html-parser'
-import { extractMustacheRegions } from './interpolation'
+import { extractMustacheRegions } from './mustache'
 
 // angular-html-parser 使用 level=1 表示 fatal error。
 const HTML_FATAL_ERROR_LEVEL = 1

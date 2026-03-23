@@ -7,14 +7,14 @@ const RE_SEMICOLON_END = /;\s*$/
 const EXPORT_DEFAULT_PREFIX = 'export default '
 
 /**
- * 将插值内层按 JS 表达式校验并交给 Prettier babel 格式化。
+ * 将 mustache 内层按 JS 表达式校验并交给 Prettier babel 格式化。
  * 非表达式（语句）或语法错误时返回 null（除非 throwOnError）。
- * @param inner 插值内层原始字符串（不含 `{{` 与 `}}`）
+ * @param inner mustache 内层原始字符串（不含 `{{` 与 `}}`）
  * @param options 外层 Prettier 传入的当前文件格式化选项
  * @param throwOnError 是否在失败时抛错（true）或容错返回 null（false）
  * @param overrideOptions 内层表达式格式化覆盖项（在外层 options 基础上覆盖）
  */
-export async function formatInterpolationInner(
+export async function formatMustacheInner(
   inner: string,
   options: Options,
   throwOnError: boolean,
@@ -23,7 +23,7 @@ export async function formatInterpolationInner(
   const trimmed = inner.trim()
   if (!trimmed) {
     if (throwOnError) {
-      throw new Error('Empty WXML interpolation expression')
+      throw new Error('Empty WXML mustache expression')
     }
     return null
   }
@@ -56,8 +56,8 @@ export async function formatInterpolationInner(
 /**
  * 鉴于 WXML 对对象的支持情况，https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/data.html#对象
  * 若裸字符串不是合法表达式，则用 `{}` 包一层再试：可解析为对象字面量时，
- * 按对象走 Prettier，再把外层 `{}` 剥掉写回插值（WXML 常见 `a:1,b:2` 即如此）。
- * @param trimmed 已去除首尾空白的插值内层表达式
+ * 按对象走 Prettier，再把外层 `{}` 剥掉写回 mustache（WXML 常见 `a:1,b:2` 即如此）。
+ * @param trimmed 已去除首尾空白的 mustache 内层表达式
  * @param options 外层 Prettier 传入的当前文件格式化选项
  * @param throwOnError 是否在失败时抛错（true）或容错返回 null（false）
  * @param overrideOptions 内层表达式格式化覆盖项（在外层 options 基础上覆盖）

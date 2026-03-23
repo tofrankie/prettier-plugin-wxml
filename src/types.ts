@@ -1,4 +1,4 @@
-export interface WxmlInterpolation {
+export interface WxmlMustache {
   start: number
   end: number
   raw: string
@@ -8,5 +8,5 @@ export interface WxmlInterpolation {
 export interface WxmlRootAst {
   type: 'wxml-root'
   source: string
-  interpolations: WxmlInterpolation[]
+  mustaches: WxmlMustache[]
 }

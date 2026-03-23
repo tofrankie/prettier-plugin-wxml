@@ -2,7 +2,7 @@ export interface MustacheRegion {
   start: number
   end: number
   fromAttribute?: boolean
-  // 仅属性值插值会携带此信息：外层属性若用双引号，内层倾向单引号；反之亦然。
+  // 仅属性值 mustache 会携带此信息：外层属性若用双引号，内层倾向单引号；反之亦然。
   preferredInnerSingleQuote?: boolean
 }
 

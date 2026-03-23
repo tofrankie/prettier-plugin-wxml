@@ -1,12 +1,12 @@
 import type { Options, Parser, Printer, SupportLanguage } from 'prettier'
-import type { MustacheRegion } from './interpolation'
-import type { WxmlInterpolation, WxmlRootAst } from './types'
+import type { MustacheRegion } from './mustache'
+import type { WxmlMustache, WxmlRootAst } from './types'
 import { collectMustacheRegions } from './collect-mustache-regions'
-import { formatInterpolationInner } from './format-expression'
+import { formatMustacheInner } from './format-expression'
 
 const AST_FORMAT = 'wxml-ast'
-// 属性插值 printWidth（足够大），用于避免类似三元运算因行宽原因导致换行，进而使得小程序无法正常解析 WXML
-const ATTRIBUTE_INTERPOLATION_PRINT_WIDTH = 10000
+// 属性 mustache printWidth（足够大），用于避免类似三元运算因行宽原因导致换行，进而使得小程序无法正常解析 WXML
+const ATTRIBUTE_MUSTACHE_PRINT_WIDTH = 10000
 const LOG_PREFIX = '[@tofrankie/prettier-plugin-wxml]'
 
 const WXML_REPORT_LEVEL = {
@@ -34,8 +34,8 @@ const wxmlPrinter: Printer<WxmlRootAst> = {
     if (node.type !== 'wxml-root') {
       return ''
     }
-    const { source, interpolations } = node
-    const sorted = [...interpolations].sort((a, b) => b.start - a.start)
+    const { source, mustaches } = node
+    const sorted = [...mustaches].sort((a, b) => b.start - a.start)
     let out = source
     for (const item of sorted) {
       if (item.formatted === null) continue
@@ -61,7 +61,7 @@ export const options = {
     default: false,
     category: 'WXML',
     description:
-      'When true, throw on WXML parse failure or when an interpolation cannot be formatted. Default: false (graceful fallback).',
+      'When true, throw on WXML parse failure or when a mustache cannot be formatted. Default: false (graceful fallback).',
   },
   wxmlReportLevel: {
     type: 'choice' as const,
@@ -94,7 +94,7 @@ export const defaultExport = {
 export type { WxmlRootAst }
 
 /**
- * 构建插件根 AST：提取插值区间、格式化内层表达式，并记录回填所需信息。
+ * 构建插件根 AST：提取 mustache 区间、格式化内层表达式，并记录回填所需信息。
  * @param text 完整源文本
  * @param options 当前文件格式化选项
  */
@@ -111,12 +111,12 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
     const msg = err instanceof Error ? err.message : String(err)
     if (throwOnError) throw err
     if (reportLevel === WXML_REPORT_LEVEL.WARN) warnSkipped(filepath, msg)
-    return { type: 'wxml-root', source: text, interpolations: [] }
+    return { type: 'wxml-root', source: text, mustaches: [] }
   }
 
   mustacheRegions.sort((a, b) => a.start - b.start)
 
-  const interpolations: WxmlInterpolation[] = []
+  const mustaches: WxmlMustache[] = []
   let formatFailCount = 0
 
   for (const { start, end, preferredInnerSingleQuote, fromAttribute } of mustacheRegions) {
@@ -129,19 +129,14 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
       : undefined
 
     const formatOverrideOptions: Partial<Options> = {
-      // 为避免格式化后，属性插值内外层引号不一致，导致小程序无法正常解析 WXML，内部会优先根据外层属性引号来决定内层字符串的引号。
+      // 为避免格式化后，属性 mustache 内外层引号不一致，导致小程序无法正常解析 WXML，内部会优先根据外层属性引号来决定内层字符串的引号。
       ...(quotePreference !== undefined && { singleQuote: quotePreference }),
-      // 属性插值 printWidth（足够大），用于避免类似三元运算因行宽原因导致换行，进而使得小程序无法正常解析 WXML
-      ...(fromAttribute && { printWidth: ATTRIBUTE_INTERPOLATION_PRINT_WIDTH }),
+      // 属性 mustache printWidth（足够大），用于避免类似三元运算因行宽原因导致换行，进而使得小程序无法正常解析 WXML
+      ...(fromAttribute && { printWidth: ATTRIBUTE_MUSTACHE_PRINT_WIDTH }),
     }
 
     try {
-      formatted = await formatInterpolationInner(
-        inner,
-        options,
-        throwOnError,
-        formatOverrideOptions
-      )
+      formatted = await formatMustacheInner(inner, options, throwOnError, formatOverrideOptions)
     } catch (err) {
       if (throwOnError) throw err
       formatted = null
@@ -149,14 +144,14 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
     if (formatted === null && inner.trim() !== '') {
       formatFailCount += 1
     }
-    interpolations.push({ start, end, raw, formatted })
+    mustaches.push({ start, end, raw, formatted })
   }
 
   if (formatFailCount > 0 && reportLevel === WXML_REPORT_LEVEL.WARN && !throwOnError) {
     warnPartial(filepath, formatFailCount)
   }
 
-  return { type: 'wxml-root', source: text, interpolations }
+  return { type: 'wxml-root', source: text, mustaches }
 }
 
 /**
@@ -177,9 +172,9 @@ function getReportLevel(options: WxmlPluginOptions): WxmlReportLevel {
 }
 
 /**
- * 输出“部分插值失败”的文件级 warning。
+ * 输出“部分 mustache 失败”的文件级 warning。
  * @param filepath 当前文件路径
- * @param count 未能格式化的插值数量
+ * @param count 未能格式化的 mustache 数量
  */
 function warnPartial(filepath: string | undefined, count: number): void {
   const fp = filepath ?? '<stdin>'
@@ -197,7 +192,7 @@ function warnSkipped(filepath: string | undefined, reason: string): void {
 }
 
 /**
- * 仅在属性插值场景下，通过 mustache 左右邻接字符推断内层字符串单双引号偏好。
+ * 仅在属性 mustache 场景下，通过 mustache 左右邻接字符推断内层字符串单双引号偏好。
  * @param source 完整源文本
  * @param start mustache 起始偏移（指向 `{{`）
  * @param end mustache 结束偏移（指向 `}}` 之后）
