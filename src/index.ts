@@ -1,2 +1,9 @@
-export { defaultExport as default, defaultExport, options } from './plugin.js'
-export type { WxmlRootAst } from './types.js'
+export {
+  defaultExport as default,
+  defaultExport,
+  languages,
+  options,
+  parsers,
+  printers,
+} from './plugin'
+export type { WxmlRootAst } from './types'

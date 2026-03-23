@@ -33,22 +33,33 @@
 <!-- 混合文本：hello … {{name}} … -->
 <text>hello {{ name }} !</text>
 <view data-mix="hello {{ name }} !"></view>
+<view data-mix="hello {{ name }} !">hello {{ name }} !</view>
 
 <!-- 多个插值同一行 -->
 <text>{{ a }}{{ b }}</text>
 <view data-ab="{{ a }}{{ b }}"></view>
+<!-- 同一属性值内多个插值（长度 > 150），避免过长超过 printWidth 导致换行，使得 WXML 解析失败 -->
+<view data-long="prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-{{ firstValue + 1 }}-MID-{{ secondValue && thirdValue }}-TAIL-{{ user.profile?.nickname }}-suffix-END"></view>
+
+<!-- 左右不止一个空格：应归一为单空格 -->
+<text>{{ a + b }}</text>
+<text>{{ a + b }}</text>
+<view data-many-space="{{ a + b }}"></view>
+<view data-many-space="{{ a + b }}"></view>
 
 <!-- 算术 / 逻辑 / 比较 -->
 <text>{{ a + b * c - ((d / e) % 3) }}</text>
 <text>{{ (a === b && c) || d }}</text>
 <view data-arith="{{ a + b * c - ((d / e) % 3) }}"></view>
 <view data-logic="{{ (a === b && c) || d }}"></view>
+<view>{{ "hello" + name }}</view>
 
 <!-- 一元与括号 -->
 <text>{{ !flag }}</text>
 <text>{{ (a + b) * c }}</text>
 <view hidden="{{ !flag }}"></view>
 <view data-paren="{{ (a + b) * c }}"></view>
+<view>{{ a + b }} + {{ c }} + d</view>
 
 <!-- 三元 -->
 <text>{{ cond ? a : b }}</text>
@@ -70,6 +81,7 @@
 <!-- WXML template / data 类对象简写（锁定当前格式化行为） -->
 <template is="objectCombine" data="{{foo, bar}}"></template>
 <template is="spreadMix" data="{{ ...a, ...b, c }}"></template>
+<template is="spreadMix" data="{{ ...a, ...b, c }}"></template>
 <view data-comma-short="{{foo, bar}}"></view>
 
 <!-- 函数调用与箭头函数 -->
@@ -84,16 +96,22 @@
 
 <!-- 字符串内含 `}}`（状态机须完整提取，非贪婪正则会截断） -->
 <text>{{ "a}}" }}</text>
+<text>{{ "a}}" }}</text>
 <view data-str-rbrace='{{ "a}}" }}'></view>
+<view data-str-rbrace="{{ 'a}}' }}"></view>
 
 <!-- 字符串内含 `{{` -->
 <text>{{ "{{x}}" }}</text>
-<view data-str-brace="{{ "{{x}}" }}"></view>
+<view data-str-brace="{{ '{{x}}' }}"></view>
 
 <!-- 注释内 `{{}}` 不处理；下一行正文照常处理 -->
 <!-- {{count+1}} -->
 <text>after-comment {{ x }}</text>
 <view data-after="{{ x }}"></view>
+
+<!-- 已是正常空格：保持原样 -->
+<text>{{ foo }}</text>
+<view data-good-spaced="{{ foo }}"></view>
 
 <!-- 非法表达式：保持原样 -->
 <text>{{foo+}}</text>
@@ -107,3 +125,11 @@
 
 <!-- 属性值中 `}}` 与闭合引号之间的空格须保留（语义相关），详见：https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/data.html#对象 -->
 <view wx:for="{{ [1, 2, 3] }} " wx:key="*this"></view>
+<view wx:for=" {{ [1, 2, 3] }}" wx:key="*this"></view>
+<view wx:for=" {{ [1, 2, 3] }} " wx:key="*this"></view>
+
+<!-- 布尔属性示例：无值布尔属性保持不变；带插值的布尔属性照常格式化 -->
+<button disabled></button>
+<view hidden="{{ flag ? true : false }}"></view>
+<custom-component custom-props></custom-component>
+<custom-component custom-props hidden="{{ !flag }}"></custom-component>

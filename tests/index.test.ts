@@ -44,6 +44,10 @@ describe('prettier-plugin-wxml', () => {
     expect(await format('{{a}}{{b}}')).toMatchInlineSnapshot('"{{ a }}{{ b }}"')
   })
 
+  it('左右多空格归一为单空格', async () => {
+    expect(await format('{{   a+b   }}')).toBe('{{ a + b }}')
+  })
+
   it('文本节点内多个插值与字面量相间', async () => {
     expect(await format('<text>a{{x}}b{{y}}c</text>')).toBe('<text>a{{ x }}b{{ y }}c</text>')
   })
@@ -57,6 +61,19 @@ describe('prettier-plugin-wxml', () => {
   it('同一属性值内多个插值', async () => {
     expect(await format('<view data="{{a}}{{b}}"></view>')).toBe(
       '<view data="{{ a }}{{ b }}"></view>'
+    )
+  })
+
+  it('同一属性值内多个插值（长度 > 150）', async () => {
+    const source =
+      '<view data-long="prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-{{firstValue+1}}-MID-{{secondValue&&thirdValue}}-TAIL-{{ user.profile?.nickname }}-suffix-END"></view>'
+    const out = await format(source)
+    expect(source.length).toBeGreaterThan(150)
+    expect(out).toContain('{{ firstValue + 1 }}')
+    expect(out).toContain('{{ secondValue && thirdValue }}')
+    expect(out).toContain('{{ user.profile?.nickname }}')
+    expect(out).toContain(
+      'prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-'
     )
   })
 
@@ -126,6 +143,11 @@ describe('prettier-plugin-wxml', () => {
     expect(await format(s)).toBe(s)
   })
 
+  it('非法表达式（已是正常空格）原样', async () => {
+    const s = '{{ foo+ }}'
+    expect(await format(s)).toBe(s)
+  })
+
   it('语句类输入原样', async () => {
     expect(await format('{{ if (a) b }}')).toBe('{{ if (a) b }}')
     expect(await format('{{ return a }}')).toBe('{{ return a }}')
@@ -141,6 +163,16 @@ describe('prettier-plugin-wxml', () => {
     const out = await format(s)
     expect(out).toContain('}} "')
     expect(out).toMatch(/wx:for="\{\{.*\}\} "/)
+  })
+
+  it('属性外层双引号时，内层字符串保持/倾向单引号', async () => {
+    const s = '<view data-str="{{ \'a\' }}"></view>'
+    expect(await format(s)).toBe('<view data-str="{{ \'a\' }}"></view>')
+  })
+
+  it('属性外层单引号时，内层字符串优先双引号', async () => {
+    const s = '<view data-str=\'{{ "a" }}\'></view>'
+    expect(await format(s)).toBe('<view data-str=\'{{ "a" }}\'></view>')
   })
 
   it('throwOnError：解析失败时抛出', async () => {

@@ -20,11 +20,11 @@ function stripFormattedExportDefaultLine(output: string): string {
   return body
 }
 
-function buildInnerFormatOptions(options: Options): Options {
+function buildInnerFormatOptions(options: Options, preferredInnerSingleQuote?: boolean): Options {
   return {
     parser: 'babel',
     semi: false,
-    singleQuote: options.singleQuote,
+    singleQuote: preferredInnerSingleQuote ?? options.singleQuote,
     printWidth: options.printWidth,
     tabWidth: options.tabWidth,
     useTabs: options.useTabs,
@@ -42,11 +42,13 @@ function buildInnerFormatOptions(options: Options): Options {
  * @param trimmed
  * @param options
  * @param throwOnError
+ * @param preferredInnerSingleQuote
  */
 async function tryFormatWrappedObjectLiteral(
   trimmed: string,
   options: Options,
-  throwOnError: boolean
+  throwOnError: boolean,
+  preferredInnerSingleQuote?: boolean
 ): Promise<string | null> {
   const wrapped = `{${trimmed}}`
   try {
@@ -56,7 +58,10 @@ async function tryFormatWrappedObjectLiteral(
   }
   try {
     const src = `export default ${wrapped};`
-    const out = await prettier.format(src, buildInnerFormatOptions(options))
+    const out = await prettier.format(
+      src,
+      buildInnerFormatOptions(options, preferredInnerSingleQuote)
+    )
     const body = stripFormattedExportDefaultLine(out)
     if (!body.startsWith('{') || !body.endsWith('}')) {
       throw new Error('Unexpected Prettier output for object literal')
@@ -74,11 +79,13 @@ async function tryFormatWrappedObjectLiteral(
  * @param inner
  * @param options
  * @param throwOnError
+ * @param preferredInnerSingleQuote
  */
 export async function formatInterpolationInner(
   inner: string,
   options: Options,
-  throwOnError: boolean
+  throwOnError: boolean,
+  preferredInnerSingleQuote?: boolean
 ): Promise<string | null> {
   const trimmed = inner.trim()
   if (!trimmed) {
@@ -90,7 +97,12 @@ export async function formatInterpolationInner(
   try {
     parseExpression(trimmed, { sourceType: 'module' })
   } catch (err) {
-    const fromObj = await tryFormatWrappedObjectLiteral(trimmed, options, throwOnError)
+    const fromObj = await tryFormatWrappedObjectLiteral(
+      trimmed,
+      options,
+      throwOnError,
+      preferredInnerSingleQuote
+    )
     if (fromObj !== null) {
       return fromObj
     }
@@ -100,7 +112,10 @@ export async function formatInterpolationInner(
   try {
     // 使用 `export default <expr>;` 再格式化，避免裸表达式被当作「程序」而产生前导分号等问题。
     const wrapped = `export default ${trimmed};`
-    const out = await prettier.format(wrapped, buildInnerFormatOptions(options))
+    const out = await prettier.format(
+      wrapped,
+      buildInnerFormatOptions(options, preferredInnerSingleQuote)
+    )
     return stripFormattedExportDefaultLine(out)
   } catch (err) {
     if (throwOnError) throw err

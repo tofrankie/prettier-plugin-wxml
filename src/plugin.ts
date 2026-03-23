@@ -1,8 +1,8 @@
 import type { Options, Parser, Printer, SupportLanguage } from 'prettier'
-import type { MustacheRegion } from './interpolation.js'
-import type { WxmlInterpolation, WxmlRootAst } from './types.js'
-import { collectMustacheRegions } from './collect-mustache-regions.js'
-import { formatInterpolationInner } from './format-expression.js'
+import type { MustacheRegion } from './interpolation'
+import type { WxmlInterpolation, WxmlRootAst } from './types'
+import { collectMustacheRegions } from './collect-mustache-regions'
+import { formatInterpolationInner } from './format-expression'
 
 const AST_FORMAT = 'wxml-ast'
 
@@ -37,6 +37,20 @@ function warnSkipped(filepath: string | undefined, reason: string): void {
   console.warn(`[prettier-plugin-wxml] skipped ${fp}: wxml-parse-failed: ${reason}`)
 }
 
+function inferInnerSingleQuoteByNeighbors(
+  source: string,
+  start: number,
+  end: number
+): boolean | undefined {
+  const left = source[start - 1]
+  let i = end
+  while (i < source.length && /\s/.test(source[i])) i += 1
+  const right = source[i]
+  if (left === '"' && right === '"') return true
+  if (left === "'" && right === "'") return false
+  return undefined
+}
+
 async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
   const pluginOptions = options as WxmlPluginOptions
   const throwOnError = getThrowOnError(pluginOptions)
@@ -58,12 +72,15 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
   const interpolations: WxmlInterpolation[] = []
   let formatFailCount = 0
 
-  for (const { start, end } of mustacheRegions) {
+  for (const { start, end, preferredInnerSingleQuote, fromAttribute } of mustacheRegions) {
     const raw = text.slice(start, end)
     const inner = text.slice(start + 2, end - 2)
     let formatted: string | null
+    const quotePreference = fromAttribute
+      ? (preferredInnerSingleQuote ?? inferInnerSingleQuoteByNeighbors(text, start, end))
+      : undefined
     try {
-      formatted = await formatInterpolationInner(inner, options, throwOnError)
+      formatted = await formatInterpolationInner(inner, options, throwOnError, quotePreference)
     } catch (err) {
       if (throwOnError) throw err
       formatted = null
@@ -106,7 +123,7 @@ const wxmlPrinter: Printer<WxmlRootAst> = {
   },
 }
 
-const languages: SupportLanguage[] = [
+export const languages: SupportLanguage[] = [
   {
     name: 'WXML',
     parsers: ['wxml'],
@@ -139,11 +156,15 @@ export const options = {
   },
 }
 
+export const parsers = { wxml: wxmlParser }
+
+export const printers = { [AST_FORMAT]: wxmlPrinter }
+
 export const defaultExport = {
   name: '@tofrankie/prettier-plugin-wxml',
   languages,
-  parsers: { wxml: wxmlParser },
-  printers: { [AST_FORMAT]: wxmlPrinter },
+  parsers,
+  printers,
   options,
 }
 

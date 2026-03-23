@@ -1,7 +1,7 @@
 import type { Ast, ParseSourceSpan } from 'angular-html-parser'
-import type { MustacheRegion } from './interpolation.js'
+import type { MustacheRegion } from './interpolation'
 import { parseHtml, RecursiveVisitor, visitAll } from 'angular-html-parser'
-import { extractMustacheRegions } from './interpolation.js'
+import { extractMustacheRegions } from './interpolation'
 
 // angular-html-parser 使用 level=1 表示 fatal error。
 const HTML_FATAL_ERROR_LEVEL = 1
@@ -41,18 +41,41 @@ class MustacheRegionCollector extends RecursiveVisitor {
 
   override visitAttribute(ast: Extract<Ast.Node, { kind: 'attribute' }>, context: unknown): void {
     if (ast.valueSpan && ast.value.includes('{{')) {
-      this.pushSpan(ast.valueSpan)
+      const quote = this.detectAttributeQuote(ast.valueSpan)
+      // 外层 " -> 内层倾向单引号；外层 ' -> 内层倾向双引号。
+      const preferredInnerSingleQuote = quote === '"' ? true : quote === "'" ? false : undefined
+      this.pushSpan(ast.valueSpan, preferredInnerSingleQuote, true)
     }
     super.visitAttribute(ast, context)
   }
 
-  private pushSpan(span: ParseSourceSpan): void {
+  private pushSpan(
+    span: ParseSourceSpan,
+    preferredInnerSingleQuote?: boolean,
+    fromAttribute = false
+  ): void {
     const start = span.start.offset
     const end = span.end.offset
     const slice = this.source.slice(start, end)
     if (!slice.includes('{{')) return
     for (const r of extractMustacheRegions(slice)) {
-      this.mustacheRegions.push({ start: start + r.start, end: start + r.end })
+      this.mustacheRegions.push({
+        start: start + r.start,
+        end: start + r.end,
+        fromAttribute,
+        preferredInnerSingleQuote,
+      })
     }
+  }
+
+  private detectAttributeQuote(span: ParseSourceSpan): '"' | "'" | null {
+    const start = span.start.offset
+    const end = span.end.offset
+    const first = this.source[start]
+    const last = this.source[end - 1]
+    if ((first === '"' || first === "'") && first === last) {
+      return first
+    }
+    return null
   }
 }
