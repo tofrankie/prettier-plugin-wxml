@@ -1,6 +1,6 @@
 <wxs src="./index.wxs" module="utils" />
 
-<nav nav-type="title" title-text="全部消息"></nav>
+<nav nav-type="title" title-text="全部消息" />
 <scroll-view
   class="message-list"
   scroll-y

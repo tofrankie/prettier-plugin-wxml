@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "lint": "prettier . --write"
+    "lint": "prettier '**/*.wxml' --write"
   },
   "dependencies": {
     "tdesign-miniprogram": "^1.11.2"

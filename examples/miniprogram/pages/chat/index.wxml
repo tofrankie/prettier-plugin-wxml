@@ -6,7 +6,10 @@
   <scroll-view class="content" scroll-y scroll-into-view="{{ anchor }}">
     <view class="messages">
       <block wx:for="{{ messages }}" wx:key="index">
-        <view wx:if="{{ index === 0 || item.time - messages[index - 1].time > 120000 }}" class="time">
+        <view
+          wx:if="{{ index === 0 || item.time - messages[index - 1].time > 120000 }}"
+          class="time"
+        >
           {{ utils.formatTime(item.time) }}
         </view>
 
@@ -54,5 +57,12 @@
       bindconfirm="sendMessage"
     />
   </view>
-  <t-button class="send" theme="primary" shape="round" disabled="{{ !input }}" bind:tap="sendMessage">发送</t-button>
+  <t-button
+    class="send"
+    theme="primary"
+    shape="round"
+    disabled="{{ !input }}"
+    bind:tap="sendMessage"
+    >发送</t-button
+  >
 </view>

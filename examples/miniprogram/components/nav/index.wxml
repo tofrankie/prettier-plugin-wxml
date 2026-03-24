@@ -7,15 +7,15 @@
           shape="round"
           placeholder="请搜索你想要的内容"
           bindtap="searchTurn"
-          wx:if="{{navType === 'search'}}"
+          wx:if="{{ navType === 'search' }}"
         />
       </view>
     </view>
   </t-navbar>
   <t-drawer
-    style="padding-top: {{statusHeight}}px;"
-    visible="{{visible}}"
-    items="{{sidebar}}"
+    style="padding-top: {{ statusHeight }}px;"
+    visible="{{ visible }}"
+    items="{{ sidebar }}"
     placement="left"
     title="页面目录"
     bind:item-click="itemClick"

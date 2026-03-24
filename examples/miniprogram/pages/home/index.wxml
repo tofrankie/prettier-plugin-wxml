@@ -4,29 +4,35 @@
     <t-tabs defaultValue="recommend">
       <t-tab-panel label="推荐" value="recommend">
         <t-pull-down-refresh
-          value="{{enable}}"
+          value="{{ enable }}"
           bind:refresh="onRefresh"
-          loadingTexts="{{['下拉刷新', '松手刷新', '正在刷新', '刷新完成']}}"
+          loadingTexts="{{ ['下拉刷新', '松手刷新', '正在刷新', '刷新完成'] }}"
         >
           <view class="home-card-list">
             <t-swiper
-              list="{{swiperList}}"
+              list="{{ swiperList }}"
               navigation="{{ { type: 'dots-bar' } }}"
               height="488rpx"
               style="width: 340rpx"
             />
-            <card wx:for="{{cardInfo}}" wx:key="index" desc="{{item.desc}}" url="{{item.url}}" tags="{{item.tags}}" />
+            <card
+              wx:for="{{ cardInfo }}"
+              wx:key="index"
+              desc="{{ item.desc }}"
+              url="{{ item.url }}"
+              tags="{{ item.tags }}"
+            />
           </view>
         </t-pull-down-refresh>
       </t-tab-panel>
       <t-tab-panel label="我的关注" value="follow">
         <view class="home-card-list">
           <card
-            wx:for="{{focusCardInfo}}"
+            wx:for="{{ focusCardInfo }}"
             wx:key="index"
-            desc="{{item.desc}}"
-            url="{{item.url}}"
-            tags="{{item.tags}}"
+            desc="{{ item.desc }}"
+            url="{{ item.url }}"
+            tags="{{ item.tags }}"
           />
         </view>
       </t-tab-panel>
@@ -35,6 +41,8 @@
 </view>
 
 <view class="home-release">
-  <t-button theme="primary" size="large" icon="add" shape="round" bindtap="goRelease"> 发布 </t-button>
+  <t-button theme="primary" size="large" icon="add" shape="round" bindtap="goRelease">
+    发布
+  </t-button>
 </view>
 <t-message id="t-message" />

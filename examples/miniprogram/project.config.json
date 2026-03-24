@@ -49,7 +49,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.7.8",
-  "appid": "wx3d3fa88ce5272f85",
+  "appid": "",
   "projectname": "miniprogram-starter",
   "condition": {
     "miniprogram": {
