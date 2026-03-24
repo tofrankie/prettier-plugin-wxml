@@ -1,5 +1,9 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.5 (2026-03-25)
+
+- 支持 WXML 中的 WXS 代码格式化
+
 ## prettier-plugin-wxml@0.0.4 (2026-03-25)
 
 ### Features
