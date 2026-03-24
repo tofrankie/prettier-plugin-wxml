@@ -2,3 +2,4 @@ tests/fixtures/**/*.wxml
 tests/local/**/*.wxml
 tests/local/.snapshots/
 pnpm-lock.yaml
+examples/**

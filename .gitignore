@@ -27,3 +27,4 @@ coverage/
 *.tgz
 .cursor/
 tests/local/
+project.private.config.json

@@ -1,0 +1,16 @@
+{
+  "name": "tdesign-miniprogram-starter",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "lint": "prettier . --write"
+  },
+  "dependencies": {
+    "tdesign-miniprogram": "^1.11.2"
+  },
+  "devDependencies": {
+    "@tofrankie/prettier": "^0.0.5",
+    "@tofrankie/prettier-plugin-wxml": "workspace:*",
+    "prettier": "^3.8.1"
+  }
+}
