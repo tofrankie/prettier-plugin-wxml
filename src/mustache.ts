@@ -1,8 +1,11 @@
 export interface MustacheRegion {
+  /** mustache 起始下标（含），指向 `{{` 的第一个 `{`。 */
   start: number
+  /** mustache 结束下标（不含），指向 `}}` 之后的位置（可直接用于 `slice(start, end)`）。 */
   end: number
+  /** 是否来自属性值（`true` 表示来自 `attr="{{ ... }}"`，否则来自文本节点）。 */
   fromAttribute?: boolean
-  // 仅属性值 mustache 会携带此信息：外层属性若用双引号，内层倾向单引号；反之亦然。
+  /** 仅属性值 mustache 会携带：外层属性若用双引号，内层倾向单引号；反之亦然。 */
   preferredInnerSingleQuote?: boolean
 }
 

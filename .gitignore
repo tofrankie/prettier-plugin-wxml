@@ -26,3 +26,4 @@ coverage/
 !.env.example
 *.tgz
 .cursor/
+tests/local/

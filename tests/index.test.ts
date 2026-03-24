@@ -1,17 +1,49 @@
+import type { WxmlPluginOptions } from '../src/plugin-options'
+import { readdirSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import baseOptions from '@tofrankie/prettier'
 import * as prettier from 'prettier'
 import { describe, expect, it, vi } from 'vitest'
-import plugin from '../src/index.js'
+import plugin from '../src/index'
+import { resolveSelfCloseExcludeSet, selfCloseTags } from '../src/self-close-tags'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const FIXTURES_ROOT = join(__dirname, 'fixtures')
 
-async function format(
-  source: string,
-  opts: { filepath?: string; wxmlThrowOnError?: boolean; wxmlReportLevel?: 'silent' | 'warn' } = {}
-) {
+type FormatOptions = Pick<
+  WxmlPluginOptions,
+  | 'filepath'
+  | 'wxmlThrowOnError'
+  | 'wxmlReportLevel'
+  | 'wxmlFormat'
+  | 'wxmlFormatOnError'
+  | 'wxmlSelfClose'
+  | 'wxmlSelfCloseExclude'
+>
+
+function getFixtureCaseDirs(): string[] {
+  const out: string[] = []
+  const stack = [FIXTURES_ROOT]
+  while (stack.length > 0) {
+    const current = stack.pop()
+    if (!current) continue
+    const entries = readdirSync(current, { withFileTypes: true })
+    const hasInput = entries.some(e => e.isFile() && e.name === 'input.wxml')
+    const hasOutput = entries.some(e => e.isFile() && e.name === 'output.wxml')
+    if (hasInput && hasOutput) {
+      out.push(current)
+      continue
+    }
+    for (const entry of entries) {
+      if (entry.isDirectory()) stack.push(join(current, entry.name))
+    }
+  }
+  return out.sort((a, b) => a.localeCompare(b))
+}
+
+async function formatRaw(source: string, opts: FormatOptions = {}) {
   return prettier.format(source, {
     ...baseOptions,
     parser: 'wxml',
@@ -19,16 +51,47 @@ async function format(
     filepath: opts.filepath ?? 'test.wxml',
     ...(opts.wxmlThrowOnError !== undefined && { wxmlThrowOnError: opts.wxmlThrowOnError }),
     ...(opts.wxmlReportLevel !== undefined && { wxmlReportLevel: opts.wxmlReportLevel }),
+    ...(opts.wxmlFormat !== undefined && { wxmlFormat: opts.wxmlFormat }),
+    ...(opts.wxmlFormatOnError !== undefined && { wxmlFormatOnError: opts.wxmlFormatOnError }),
+    ...(opts.wxmlSelfClose !== undefined && {
+      wxmlSelfClose: opts.wxmlSelfClose,
+    }),
+    ...(opts.wxmlSelfCloseExclude !== undefined && {
+      wxmlSelfCloseExclude: opts.wxmlSelfCloseExclude,
+    }),
   })
 }
 
+async function format(source: string, opts: FormatOptions = {}) {
+  const out = await formatRaw(source, opts)
+  return trimSingleEofNewline(out)
+}
+
+function trimSingleEofNewline(text: string): string {
+  return text.endsWith('\n') ? text.slice(0, -1) : text
+}
+
 describe('prettier-plugin-wxml', () => {
-  it('fixture/index 输入与 output.wxml 一致', async () => {
-    const base = join(__dirname, 'fixtures/index')
-    const input = await readFile(join(base, 'input.wxml'), 'utf8')
-    const expected = await readFile(join(base, 'output.wxml'), 'utf8')
-    const out = await format(input, { filepath: 'index.wxml' })
-    expect(out).toBe(expected)
+  it('fixtures 输入与 output.wxml 一致', async () => {
+    const cases = getFixtureCaseDirs()
+    for (const base of cases) {
+      const input = await readFile(join(base, 'input.wxml'), 'utf8')
+      const expected = await readFile(join(base, 'output.wxml'), 'utf8')
+      let fixtureOptions: FormatOptions = {}
+      try {
+        fixtureOptions = JSON.parse(
+          await readFile(join(base, 'options.json'), 'utf8')
+        ) as FormatOptions
+      } catch {
+        // ignore missing options.json
+      }
+      const caseName = base.replace(`${FIXTURES_ROOT}/`, '')
+      const out = await formatRaw(input, {
+        filepath: `${caseName}.wxml`,
+        ...fixtureOptions,
+      })
+      expect(out).toBe(expected)
+    }
   })
 
   it('幂等：连续格式化结果不变', async () => {
@@ -61,9 +124,7 @@ describe('prettier-plugin-wxml', () => {
   })
 
   it('同一属性值内多个插值', async () => {
-    expect(await format('<view data="{{a}}{{b}}"></view>')).toBe(
-      '<view data="{{ a }}{{ b }}"></view>'
-    )
+    expect(await format('<view data="{{a}}{{b}}"></view>')).toBe('<view data="{{ a }}{{ b }}" />')
   })
 
   it('同一属性值内多个插值（长度 > 150）', async () => {
@@ -101,7 +162,7 @@ describe('prettier-plugin-wxml', () => {
 
   it('wx:for 数组字面量', async () => {
     expect(await format('<view wx:for="{{[1,2,3]}}"></view>')).toMatchInlineSnapshot(
-      '"<view wx:for="{{ [1, 2, 3] }}"></view>"'
+      '"<view wx:for="{{ [1, 2, 3] }}" />"'
     )
   })
 
@@ -136,8 +197,23 @@ describe('prettier-plugin-wxml', () => {
   it('注释内插值不处理', async () => {
     const s = '<!-- {{count+1}} --><view>{{a}}</view>'
     expect(await format(s)).toMatchInlineSnapshot(`
-      "<!-- {{count+1}} --><view>{{ a }}</view>"
+      "<!-- {{count+1}} -->
+      <view>{{ a }}</view>"
     `)
+  })
+
+  it('prettier-ignore：文件入口注释仅忽略下一个节点', async () => {
+    const s = '<!-- prettier-ignore --><view>{{a+b}}</view><view>{{c+d}}</view>'
+    expect(await format(s, { wxmlFormat: false })).toBe(
+      '<!-- prettier-ignore --><view>{{a+b}}</view><view>{{ c + d }}</view>'
+    )
+  })
+
+  it('prettier-ignore：某一行注释仅忽略下一个节点', async () => {
+    const s = '<view>{{a+b}}</view><!-- prettier-ignore --><view>{{c+d}}</view><view>{{e+f}}</view>'
+    expect(await format(s, { wxmlFormat: false })).toBe(
+      '<view>{{ a + b }}</view><!-- prettier-ignore --><view>{{c+d}}</view><view>{{ e + f }}</view>'
+    )
   })
 
   it('非法表达式原样', async () => {
@@ -169,12 +245,12 @@ describe('prettier-plugin-wxml', () => {
 
   it('属性外层双引号时，内层字符串保持/倾向单引号', async () => {
     const s = '<view data-str="{{ \'a\' }}"></view>'
-    expect(await format(s)).toBe('<view data-str="{{ \'a\' }}"></view>')
+    expect(await format(s)).toBe('<view data-str="{{ \'a\' }}" />')
   })
 
   it('属性外层单引号时，内层字符串优先双引号', async () => {
     const s = '<view data-str=\'{{ "a" }}\'></view>'
-    expect(await format(s)).toBe('<view data-str=\'{{ "a" }}\'></view>')
+    expect(await format(s)).toBe('<view data-str=\'{{ "a" }}\' />')
   })
 
   it('throwOnError：解析失败时抛出', async () => {
@@ -197,7 +273,7 @@ describe('prettier-plugin-wxml', () => {
         filepath: 'bad.wxml',
         wxmlThrowOnError: true,
       })
-    ).rejects.toThrow()
+    ).rejects.toThrow(/mustache at 1:3/)
   })
 
   it('wxmlReportLevel=warn：解析失败输出 warning', async () => {
@@ -205,8 +281,10 @@ describe('prettier-plugin-wxml', () => {
     const bad = '<view attr'
     await format(bad, { filepath: 'bad.wxml', wxmlReportLevel: 'warn' })
     expect(warn).toHaveBeenCalled()
-    expect(String(warn.mock.calls[0]?.[0])).toContain('skipped')
-    expect(String(warn.mock.calls[0]?.[0])).toContain('bad.wxml')
+    const combined = warn.mock.calls.map(c => String(c[0])).join('\n')
+    expect(combined).toContain('wxml-format-failed')
+    expect(combined).toContain('mustache-collect-failed')
+    expect(combined).toContain('bad.wxml')
     warn.mockRestore()
   })
 
@@ -214,7 +292,7 @@ describe('prettier-plugin-wxml', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     await format('{{a}}{{foo+}}', { filepath: 'p.wxml', wxmlReportLevel: 'warn' })
     expect(warn).toHaveBeenCalled()
-    expect(String(warn.mock.calls[0]?.[0])).toContain('partial')
+    expect(String(warn.mock.calls[0]?.[0])).toContain('expression-format-failed')
     expect(String(warn.mock.calls[0]?.[0])).toContain('x1')
     warn.mockRestore()
   })
@@ -231,7 +309,7 @@ describe('prettier-plugin-wxml', () => {
 `.trim()
     await format(source, { filepath: 'warn-invalid.wxml', wxmlReportLevel: 'warn' })
     expect(warn).toHaveBeenCalled()
-    expect(String(warn.mock.calls[0]?.[0])).toContain('partial')
+    expect(String(warn.mock.calls[0]?.[0])).toContain('expression-format-failed')
     expect(String(warn.mock.calls[0]?.[0])).toContain('warn-invalid.wxml')
     expect(String(warn.mock.calls[0]?.[0])).toContain('x6')
     warn.mockRestore()
@@ -239,8 +317,8 @@ describe('prettier-plugin-wxml', () => {
 
   it('默认 silent 不输出 warn', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    await format('<view attr')
-    await format('{{bad+}}')
+    await format('<view attr', { filepath: 'silent-bad.wxml' })
+    await format('{{bad+}}', { filepath: 'silent-expr.wxml' })
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
   })
@@ -249,5 +327,119 @@ describe('prettier-plugin-wxml', () => {
     const s = '<template is="x" data="{{foo, bar}}"></template>'
     const out = await format(s)
     expect(out).toContain('data=')
+  })
+
+  it('wxmlSelfClose：默认可 selfClose（含 view 与自定义组件）', async () => {
+    const source = '<view></view><my-card></my-card><text> x </text>'
+    const out = await format(source, {
+      wxmlSelfClose: true,
+    })
+    expect(out).toBe('<view />\n<my-card />\n<text> x </text>')
+  })
+
+  it('wxmlSelfCloseExclude：可排除不做 selfClose 的标签', async () => {
+    const source = '<view></view><my-card></my-card>'
+    const out = await format(source, {
+      wxmlSelfClose: true,
+      wxmlSelfCloseExclude: ['view'],
+    })
+    expect(out).toBe('<view></view>\n<my-card />')
+  })
+
+  it('resolveSelfCloseExcludeSet 支持函数（不经 Prettier 选项，供程序化调用）', () => {
+    const src = '<view></view><my-card></my-card>'
+    const out = selfCloseTags(
+      src,
+      resolveSelfCloseExcludeSet(() => ['view'])
+    )
+    expect(out).toBe('<view></view><my-card />')
+  })
+
+  it('wxmlSelfClose：含空白文本/注释/子节点时不做 selfClose', async () => {
+    const source = '<view> </view><view><!--x--></view><view><text></text></view>'
+    const out = await format(source, {
+      wxmlSelfClose: true,
+    })
+    expect(out).toBe('<view> </view>\n<view><!--x--></view>\n<view><text /></view>')
+  })
+
+  it('wxmlFormat：开启后先做整文件 HTML 格式化，再做 mustache', async () => {
+    const source = '<view>\n<text>{{a+b}}</text>\n</view>'
+    const out = await format(source, { wxmlFormat: true })
+    expect(out).toBe('<view>\n<text>{{ a + b }}</text>\n</view>')
+  })
+
+  it('singleAttributePerLine=true 时，mustache 仍正确格式化', async () => {
+    const source =
+      '<view wx:if="{{a+b}}" hidden="{{c+d}}" data-sum="{{x+y}}" data-long="{{foo+bar+baz+qux+quux+corge+grault+garply+waldo+fred+plugh+xyzzy+thud}}">t</view>'
+    expect(source.length).toBeGreaterThan(120)
+    const out = trimSingleEofNewline(
+      await prettier.format(source, {
+        ...baseOptions,
+        parser: 'wxml',
+        plugins: [plugin],
+        filepath: 'aggressive-format.wxml',
+        wxmlFormat: true,
+        wxmlSelfClose: false,
+        singleAttributePerLine: true,
+        printWidth: 120,
+      })
+    )
+    expect(out).toContain('wx:if="{{ a + b }}"')
+    expect(out).toContain('hidden="{{ c + d }}"')
+    expect(out).toContain('data-sum="{{ x + y }}"')
+    expect(out).toContain('data-long="{{ foo + bar + baz + qux + quux + corge + grault')
+  })
+
+  it('wxmlFormat=true 时不应把 mustache 字符串硬换行导致语法损坏', async () => {
+    const source =
+      "<view>{{item.product.type === 'union_buy_voucher'?'满 '+item.product.threshold+' 减 '+item.product.value:'充值话费直接抵扣'}}</view>"
+    await expect(
+      prettier.format(source, {
+        ...baseOptions,
+        parser: 'wxml',
+        plugins: [plugin],
+        filepath: 'mustache-protect.wxml',
+        wxmlFormat: true,
+        wxmlThrowOnError: true,
+      })
+    ).resolves.toContain("item.product.type === 'union_buy_voucher'")
+  })
+
+  it('默认使用 Vue parser：支持 Vue 风格模板格式化（含文本节点 mustache）', async () => {
+    const source =
+      '<view class="notice text-light">{{a?1:2}}</view><view> {{ flag ? "x" : "y" }}</view>'
+    const out = await format(source, {
+      wxmlFormat: true,
+      wxmlSelfClose: false,
+    })
+    expect(out).toContain('<view class="notice text-light">{{ a ? 1 : 2 }}</view>')
+    expect(out).toContain("<view> {{ flag ? 'x' : 'y' }}</view>")
+  })
+
+  it('wxmlFormatOnError=warn：formatWxml pass 失败时回退并继续（不抛错）', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const out = await format('<view attr', {
+      wxmlFormat: true,
+      wxmlFormatOnError: 'warn',
+      wxmlReportLevel: 'warn',
+      filepath: 'format-fail.wxml',
+    })
+    expect(out).toBe('<view attr')
+    expect(warn).toHaveBeenCalled()
+    expect(String(warn.mock.calls[0]?.[0])).toContain('wxml-format-failed')
+    warn.mockRestore()
+  })
+
+  it('wxmlFormatOnError=throw：formatWxml pass 失败时直接抛错', async () => {
+    await expect(
+      prettier.format('<view attr', {
+        parser: 'wxml',
+        plugins: [plugin],
+        filepath: 'format-fail-throw.wxml',
+        wxmlFormat: true,
+        wxmlFormatOnError: 'throw',
+      })
+    ).rejects.toThrow()
   })
 })

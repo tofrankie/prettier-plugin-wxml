@@ -1,5 +1,14 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.4 (2026-03-25)
+
+### Features
+
+- 支持代码缩进格式化处理
+- 支持空内容标签自闭合处理（如 `<view></view>` → `<view />`）
+- 支持更多配置选项：`wxmlThrowOnError`、`wxmlReportLevel`、`wxmlFormat`、`wxmlFormatOnError`、`wxmlSelfClose`、`wxmlSelfCloseExclude`
+- 丰富测试用例
+
 ## prettier-plugin-wxml@0.0.3 (2026-03-24)
 
 - 修复插值表达式换行问题，避免格式化后小程序无法解析 WXML

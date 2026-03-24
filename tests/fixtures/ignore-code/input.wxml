@@ -1,0 +1,13 @@
+<view>{{a+b}}</view>
+<!-- prettier-ignore -->
+<view>{{c+d}}</view>
+<view>{{e+f}}</view>
+
+<view>
+  <text>{{a+b*c-d/e%3}}</text>
+  <!-- <view>
+    <text>{{a===b&&c||d}}</text>
+  </view>
+  <view data-arith="{{a+b*c-d/e%3}}"></view> -->
+  <view data-logic="{{a===b&&c||d}}"></view>
+</view>

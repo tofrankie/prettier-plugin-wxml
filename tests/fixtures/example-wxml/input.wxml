@@ -1,0 +1,183 @@
+<!-- https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/ -->
+<!-- 数据绑定 -->
+<view>
+  <view> {{message}} </view>
+  <text>{{!flag}}</text>
+  <text>{{user.info?.name}}</text>
+  <view data-chain="{{user.info?.name}}"></view>
+  <view id="item-{{id}}"> </view>
+  <view wx:if="{{condition}}"> </view>
+  <checkbox checked="{{false}}"> </checkbox>
+  <view hidden="{{flag?true:false}}"> Hidden </view>
+
+  <view> {{a+b}} + {{c}} + d </view>
+  <view>{{'hello' + name}}</view>
+  <text>{{a+b*c-d/e%3}}</text>
+  <text>{{a===b&&c||d}}</text>
+  <view data-arith="{{a+b*c-d/e%3}}"></view>
+  <view data-logic="{{a===b&&c||d}}"></view>
+  <view wx:if="{{length>5}}"> </view>
+
+  <text>{{cond?a:b}}</text>
+  <view class="{{cond?a:b}}"></view>
+
+  <view>{{object.key}} {{array[0]}}</view>
+
+  <view wx:for="{{[zero,1,2,3,4]}}"> {{item}} </view>
+
+  <template is="objectCombine" data="{{foo: a, bar: b}}"></template>
+  <template is="objectCombine" data="{{...obj1,...obj2,e:5}}"></template>
+  <template is="objectCombine" data="{{foo,bar}}"></template>
+  <template is="objectCombine" data="{{...obj1,...obj2,a,c:6}}"></template>
+
+  <view wx:for="{{[1,2,3]}} ">
+    {{item}}
+  </view>
+  <view wx:for="{{[1,2,3]}} ">{{item}}</view>
+  <view wx:for="{{[1,2,3] + ' '}}">
+    {{item}}
+  </view>
+
+  <!-- 特殊示例 -->
+  <view>
+    <!-- 长属性值，属性值不允许换行 -->
+    <view data-long="prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-{{firstValue+1}}-MID-{{secondValue&&thirdValue}}-TAIL-{{ user.profile?.nickname }}-suffix-END"></view>
+
+    <!-- 多个空格 -->
+    <text>{{   a+b   }}</text>
+    <text>{{  a+b   }}</text>
+    <view data-many-space="{{   a+b   }}"></view>
+    <view data-many-space="{{  a+b   }}"></view>
+
+    <!-- 字符串内含 `{{` -->
+    <text>{{ '{{x}}' }}</text>
+    <view data-str-brace="{{ '{{x}}' }}"></view>
+
+    <!-- 不处理注释内 `{{}}` -->
+    <!-- {{count+1}} -->
+    <text>after-comment {{x}}</text>
+    <view data-after="{{x}}"></view>
+
+    <!-- 已规范输入应保持稳定 -->
+    <text>{{ user.name }}</text>
+    <view data-stable="{{ user.name }}"></view>
+
+    <!-- 不合法的表达式保持原样输出 -->
+    <text>{{foo+}}</text>
+    <view data-bad="{{foo+}}"></view>
+
+    <!-- 语句类保持原样输出 -->
+    <text>{{ if (a) b }}</text>
+    <text>{{ return a }}</text>
+    <view data-stmt-if="{{ if (a) b }}"></view>
+    <view data-stmt-ret="{{ return a }}"></view>
+
+    <!-- 属性插值 `{{}}` 外层含空格 https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/data.html#对象 -->
+    <view wx:for="{{[1,2,3]}} " wx:key="*this"></view>
+    <view wx:for=" {{[1,2,3]}}" wx:key="*this"></view>
+    <view wx:for=" {{[1,2,3]}} " wx:key="*this"></view>
+
+    <!-- 布尔属性 -->
+    <button disabled></button>
+    <view hidden="{{flag ? true : false}}"></view>
+    <custom-component custom-props></custom-component>
+    <custom-component custom-props hidden="{{!flag}}"></custom-component>
+
+    <!-- TODO: 转义引号问题 -->
+  <view>
+</view>
+
+<!-- 列表渲染 -->
+<view>
+  <view wx:for="{{array}}"> {{index}}: {{item.message}} </view>
+  <view wx:for="{{array}}" wx:for-index="idx" wx:for-item="itemName">
+    {{idx}}: {{itemName.message}}
+  </view>
+  <view wx:for="{{['a','r','r','a','y']}}">
+    {{item}}
+  </view>
+  <view wx:for="{{[1,2,3,4,5,6,7,8,9]}}" wx:for-item="i">
+    <view wx:for="{{[1, 2, 3, 4,5,6, 7, 8, 9]}}" wx:for-item="j">
+      <view wx:if="{{i<=j}}"> {{i}} * {{j}} = {{i*j}} </view>
+    </view>
+  </view>
+  <block wx:for="{{[1,2,3]}}">
+    <view> {{index}}: </view>
+    <view> {{item}} </view>
+  </block>
+  <switch wx:for="{{objectArray}}" wx:key="unique" style="display: block"> {{item.id}} </switch>
+  <button bindtap="switch">Switch</button>
+  <button bindtap="addToFront">Add to the front</button>
+
+  <switch wx:for="{{numberArray}}" wx:key="*this" style="display: block"> {{item}} </switch>
+  <button bindtap="addNumberToFront">Add to the front</button>
+</view>
+
+<!-- 条件渲染 -->
+<view>
+  <view wx:if="{{view=='WEBVIEW'}}"> WEBVIEW </view>
+  <view wx:elif="{{view == 'APP'}}"> APP </view>
+  <view wx:else="{{view == 'MINA'}}"> MINA </view>
+
+  <view wx:if="{{condition}}"> True </view>
+
+  <view wx:if="{{length>5}}"> 1 </view>
+  <view wx:elif="{{length>2}}"> 2 </view>
+  <view wx:else> 3 </view>
+
+  <block wx:if="{{true}}">
+    <view> view1 </view>
+    <view> view2 </view>
+  </block>
+</view>
+
+<!-- 模板 -->
+<view>
+  <template name="staffName">
+    <view>FirstName: {{firstName}}, LastName: {{lastName}}</view>
+  </template>
+
+  <template is="staffName" data="{{...staffA}}"></template>
+  <template is="staffName" data="{{...staffB}}"></template>
+  <template is="staffName" data="{{...staffC}}"></template>
+
+  <!--
+    index: int
+    msg: string
+    time: string
+  -->
+  <template name="msgItem">
+    <view>
+      <text> {{index}}: {{msg}} </text>
+      <text> Time: {{time}} </text>
+    </view>
+  </template>
+
+  <template is="msgItem" data="{{...item}}" />
+
+  <template name="odd">
+    <view> odd </view>
+  </template>
+  <template name="even">
+    <view> even </view>
+  </template>
+
+  <block wx:for="{{[1, 2, 3, 4, 5]}}">
+    <template is="{{item % 2 == 0 ? 'even' : 'odd'}}" />
+  </block>
+</view>
+
+<!-- 引用 -->
+<view>
+  <!-- item.wxml -->
+  <template name="item">
+    <text>{{text}}</text>
+  </template>
+
+  <import src="item.wxml" />
+  <template is="item" data="{{text: 'forbar'}}" />
+
+  <include src="header.wxml" />
+  <view> body </view>
+  <include src="footer.wxml" />
+</view>

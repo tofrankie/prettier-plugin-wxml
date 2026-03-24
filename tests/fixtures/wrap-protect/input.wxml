@@ -1,0 +1,32 @@
+<view class="panel-item-main">
+  <view class="title text-light">{{ profileInfo.displayName }}</view>
+  <view class="notice text-light"
+    >{{profileInfo.ruleType === 'demo_policy_key'?'达 '+profileInfo.limitValue+' 返 '+profileInfo.bonusValue:'当前活动已下线'}}</view
+  >
+  <view>{{profileInfo.ruleType ? 'foo' : 'bar'}}</view>
+</view>
+
+<view>
+<!-- 文本节点插值换行，参考 Vue 插值风格 -->
+<view>
+  {{flag
+  ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'
+  : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'}}
+</view>
+<view>{{flag?'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World':'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'}}</view>
+<view> {{flag?'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World':'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'}}</view>
+<view>{{flag?'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World':'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'}} </view>
+<view>
+  {{flag?'https://placehold.co/1x1/?text=1':'https://placehold.co/1x1?text=1'}}
+</view>
+
+
+<!-- 修复属性换行问题 -->
+<image
+  wx:if="{{ flag1 }}"
+  class="icon"
+  src="{{ flag2
+  ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'
+  : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}"
+/>
+</view>

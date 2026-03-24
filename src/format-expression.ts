@@ -48,6 +48,17 @@ export async function formatMustacheInner(
     const out = await prettier.format(wrapped, buildInnerFormatOptions(options, overrideOptions))
     return stripFormattedExportDefaultLine(out)
   } catch (err) {
+    // 某些在 Babel AST 层可解析的表达式（如 `foo, bar`）在 `export default <expr>` 包装下并不合法，
+    // 此时回退尝试 `{...}` 对象字面量路径，兼容 WXML data 对象简写。
+    const fromObj = await tryFormatWrappedObjectLiteral(
+      trimmed,
+      options,
+      throwOnError,
+      overrideOptions
+    )
+    if (fromObj !== null) {
+      return fromObj
+    }
     if (throwOnError) throw err
     return null
   }

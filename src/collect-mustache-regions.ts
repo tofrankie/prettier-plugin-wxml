@@ -15,12 +15,18 @@ export function hasFatalHtmlParseErrors(result: ReturnType<typeof parseHtml>): b
  * @param source 完整 WXML 源码
  */
 export function collectMustacheRegions(source: string): MustacheRegion[] {
-  const result = parseHtml(source)
-  if (hasFatalHtmlParseErrors(result)) {
-    throw new Error(result.errors.map(e => e.msg).join('; '))
-  }
+  const ignoreCodeInfo = collectPrettierIgnoreCodeInfo(source)
+  return collectMustacheRegionsByAngular(source, ignoreCodeInfo.ranges)
+}
+
+function collectMustacheRegionsByAngular(
+  source: string,
+  ignoreRanges: Array<{ start: number; end: number }>
+): MustacheRegion[] {
+  const result = parseHtml(source, { canSelfClose: true })
+  if (hasFatalHtmlParseErrors(result)) throw new Error(result.errors.map(e => e.msg).join('; '))
   const mustacheRegions: MustacheRegion[] = []
-  const collector = new MustacheRegionCollector(source, mustacheRegions)
+  const collector = new MustacheRegionCollector(source, mustacheRegions, ignoreRanges)
   visitAll(collector, result.rootNodes)
   return mustacheRegions
 }
@@ -28,7 +34,8 @@ export function collectMustacheRegions(source: string): MustacheRegion[] {
 class MustacheRegionCollector extends RecursiveVisitor {
   constructor(
     private readonly source: string,
-    private readonly mustacheRegions: MustacheRegion[]
+    private readonly mustacheRegions: MustacheRegion[],
+    private readonly ignoreRanges: Array<{ start: number; end: number }>
   ) {
     super()
   }
@@ -63,9 +70,12 @@ class MustacheRegionCollector extends RecursiveVisitor {
     const slice = this.source.slice(start, end)
     if (!slice.includes('{{')) return
     for (const r of extractMustacheRegions(slice)) {
+      const absStart = start + r.start
+      const absEnd = start + r.end
+      if (isInIgnoredRange(absStart, absEnd, this.ignoreRanges)) continue
       this.mustacheRegions.push({
-        start: start + r.start,
-        end: start + r.end,
+        start: absStart,
+        end: absEnd,
         fromAttribute,
         preferredInnerSingleQuote,
       })
@@ -86,4 +96,69 @@ class MustacheRegionCollector extends RecursiveVisitor {
     }
     return null
   }
+}
+
+function collectPrettierIgnoreCodeInfo(source: string): {
+  ranges: Array<{ start: number; end: number }>
+} {
+  const result = parseHtml(source, { canSelfClose: true })
+  if (hasFatalHtmlParseErrors(result)) {
+    return { ranges: [] }
+  }
+
+  const ranges: Array<{ start: number; end: number }> = []
+  collectIgnoreRangesInSiblings(result.rootNodes, ranges)
+  return { ranges }
+}
+
+function collectIgnoreRangesInSiblings(
+  nodes: Ast.Node[],
+  ranges: Array<{ start: number; end: number }>
+): void {
+  for (let i = 0; i < nodes.length; i += 1) {
+    const node = nodes[i]
+    if (isPrettierIgnoreComment(node)) {
+      const next = findNextMeaningfulNode(nodes, i + 1)
+      if (next) {
+        ranges.push({
+          start: next.sourceSpan.start.offset,
+          end: next.sourceSpan.end.offset,
+        })
+      }
+    }
+    if (hasChildren(node)) {
+      collectIgnoreRangesInSiblings(node.children, ranges)
+    }
+  }
+}
+
+function isPrettierIgnoreComment(node: Ast.Node): boolean {
+  // TODO: https://prettier.io/docs/ignore#html
+  // prettier-ignore-attribute、prettier-ignore-attribute (mouseup)
+  return node.kind === 'comment' && (node.value ?? '').trim().toLowerCase() === 'prettier-ignore'
+}
+
+function findNextMeaningfulNode(nodes: Ast.Node[], startIdx: number): Ast.Node | null {
+  for (let i = startIdx; i < nodes.length; i += 1) {
+    const n = nodes[i]
+    if (n.kind === 'text' || n.kind === 'cdata') {
+      if (n.value.trim() === '') continue
+      return n
+    }
+    if (n.kind === 'comment' || n.kind === 'docType') continue
+    return n
+  }
+  return null
+}
+
+function hasChildren(node: Ast.Node): node is Ast.Node & { children: Ast.Node[] } {
+  return 'children' in node && Array.isArray((node as { children?: unknown }).children)
+}
+
+function isInIgnoredRange(
+  start: number,
+  end: number,
+  ignoreRanges: Array<{ start: number; end: number }>
+): boolean {
+  return ignoreRanges.some(r => start >= r.start && end <= r.end)
 }

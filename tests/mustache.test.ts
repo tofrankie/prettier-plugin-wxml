@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractMustacheRegions } from '../src/mustache.js'
+import { extractMustacheRegions } from '../src/mustache'
 
 describe('extractMustacheRegions', () => {
   it('单个 mustache，区间含一对花括号', () => {

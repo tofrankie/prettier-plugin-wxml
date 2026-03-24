@@ -1,0 +1,19 @@
+<view class="page-root">
+  <block wx:if="{{ flagA && flagB }}">
+    <view class="nest-1">
+      <view class="nest-2">
+        <text class="t">{{ cond ? pathA : pathB }}</text>
+        <image
+          class="img"
+          src="{{ flag ? urlA : urlB }}"
+          mode="aspectFill"
+          data-trace="{{ (a + b) * c - ((d / e) % 3) }}"
+        />
+      </view>
+    </view>
+  </block>
+  <view
+    data-long="prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-{{ first + 1 }}-MID-{{ second && third }}-TAIL-{{ user?.info?.name }}-suffix-END"
+    data-mix="mix {{ x }} {{ y * z }} tail"
+  ></view>
+</view>

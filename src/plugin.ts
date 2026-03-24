@@ -1,25 +1,12 @@
 import type { Options, Parser, Printer, SupportLanguage } from 'prettier'
-import type { MustacheRegion } from './mustache'
-import type { WxmlMustache, WxmlRootAst } from './types'
-import { collectMustacheRegions } from './collect-mustache-regions'
-import { formatMustacheInner } from './format-expression'
+import type { WxmlFormatOnError } from './pipeline/run-wxml-pipeline'
+import type { WxmlPluginOptions, WxmlReportLevel } from './plugin-options'
+import type { WxmlRootAst } from './types'
+import { runWxmlPipeline, WXML_FORMAT_ON_ERROR } from './pipeline/run-wxml-pipeline'
+import { WXML_REPORT_LEVEL } from './plugin-options'
 
 const AST_FORMAT = 'wxml-ast'
-// 属性 mustache printWidth（足够大），用于避免类似三元运算因行宽原因导致换行，进而使得小程序无法正常解析 WXML
-const ATTRIBUTE_MUSTACHE_PRINT_WIDTH = 10000
 const LOG_PREFIX = '[@tofrankie/prettier-plugin-wxml]'
-
-const WXML_REPORT_LEVEL = {
-  SILENT: 'silent',
-  WARN: 'warn',
-} as const
-
-type WxmlReportLevel = (typeof WXML_REPORT_LEVEL)[keyof typeof WXML_REPORT_LEVEL]
-
-interface WxmlPluginOptions extends Options {
-  wxmlThrowOnError?: boolean
-  wxmlReportLevel?: WxmlReportLevel
-}
 
 const wxmlParser: Parser<WxmlRootAst> = {
   astFormat: AST_FORMAT,
@@ -29,20 +16,12 @@ const wxmlParser: Parser<WxmlRootAst> = {
 }
 
 const wxmlPrinter: Printer<WxmlRootAst> = {
-  print(path) {
+  print(path, _options) {
     const node = path.getValue()
     if (node.type !== 'wxml-root') {
       return ''
     }
-    const { source, mustaches } = node
-    const sorted = [...mustaches].sort((a, b) => b.start - a.start)
-    let out = source
-    for (const item of sorted) {
-      if (item.formatted === null) continue
-      const replacement = `{{ ${item.formatted} }}`
-      out = out.slice(0, item.start) + replacement + out.slice(item.end)
-    }
-    return out
+    return node.formattedSource
   },
 }
 
@@ -55,6 +34,7 @@ export const languages: SupportLanguage[] = [
   },
 ]
 
+/** Prettier 可注册的选项。 */
 export const options = {
   wxmlThrowOnError: {
     type: 'boolean' as const,
@@ -77,6 +57,39 @@ export const options = {
       },
     ],
   },
+  wxmlFormat: {
+    type: 'boolean' as const,
+    category: 'WXML',
+    default: true,
+    description:
+      "Run a full-file Vue formatting pass (`parser: 'vue'`) before mustache formatting.",
+  },
+  wxmlFormatOnError: {
+    type: 'choice' as const,
+    category: 'WXML',
+    default: WXML_FORMAT_ON_ERROR.WARN,
+    description:
+      'Behavior when full-file format pass fails: warn and fallback to pre-format text, or throw.',
+    choices: [
+      { value: WXML_FORMAT_ON_ERROR.WARN, description: 'Warn and continue with fallback text.' },
+      { value: WXML_FORMAT_ON_ERROR.THROW, description: 'Throw immediately.' },
+    ],
+  },
+  wxmlSelfClose: {
+    type: 'boolean' as const,
+    category: 'WXML',
+    default: true,
+    description:
+      'Self-close eligible tags (for example, <view></view> -> <view />). Set false to disable. Use wxmlSelfCloseExclude to opt out specific tag names.',
+  },
+  wxmlSelfCloseExclude: {
+    type: 'string' as const,
+    array: true as const,
+    category: 'WXML',
+    default: [{ value: [] }],
+    description:
+      'Tag names that must not be self-closed (empty array = self-close all eligible tags). Config files use string[].',
+  },
 }
 
 export const parsers = { wxml: wxmlParser }
@@ -94,7 +107,7 @@ export const defaultExport = {
 export type { WxmlRootAst }
 
 /**
- * 构建插件根 AST：提取 mustache 区间、格式化内层表达式，并记录回填所需信息。
+ * 构建插件根 AST：执行完整流水线并把结果保存到 AST，print 阶段仅回传字符串。
  * @param text 完整源文本
  * @param options 当前文件格式化选项
  */
@@ -102,56 +115,24 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
   const pluginOptions = options as WxmlPluginOptions
   const throwOnError = getThrowOnError(pluginOptions)
   const reportLevel = getReportLevel(pluginOptions)
+  const formatOnError = getFormatOnError(pluginOptions)
   const filepath = pluginOptions.filepath
 
-  let mustacheRegions: MustacheRegion[]
-  try {
-    mustacheRegions = collectMustacheRegions(text)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    if (throwOnError) throw err
-    if (reportLevel === WXML_REPORT_LEVEL.WARN) warnSkipped(filepath, msg)
-    return { type: 'wxml-root', source: text, mustaches: [] }
-  }
+  const formattedSource = await runWxmlPipeline({
+    source: text,
+    prettierOptions: options,
+    selfCloseEnabled: pluginOptions.wxmlSelfClose !== false,
+    selfCloseExclude: pluginOptions.wxmlSelfCloseExclude,
+    formatEnabled: pluginOptions.wxmlFormat !== false,
+    formatOnError,
+    throwOnError,
+    onWarn(message) {
+      if (reportLevel !== WXML_REPORT_LEVEL.WARN) return
+      warnPipeline(filepath, message)
+    },
+  })
 
-  mustacheRegions.sort((a, b) => a.start - b.start)
-
-  const mustaches: WxmlMustache[] = []
-  let formatFailCount = 0
-
-  for (const { start, end, preferredInnerSingleQuote, fromAttribute } of mustacheRegions) {
-    const raw = text.slice(start, end)
-    const inner = text.slice(start + 2, end - 2)
-    let formatted: string | null
-
-    const quotePreference = fromAttribute
-      ? (preferredInnerSingleQuote ?? inferInnerSingleQuoteByNeighbors(text, start, end))
-      : undefined
-
-    const formatOverrideOptions: Partial<Options> = {
-      // 为避免格式化后，属性 mustache 内外层引号不一致，导致小程序无法正常解析 WXML，内部会优先根据外层属性引号来决定内层字符串的引号。
-      ...(quotePreference !== undefined && { singleQuote: quotePreference }),
-      // 属性 mustache printWidth（足够大），用于避免类似三元运算因行宽原因导致换行，进而使得小程序无法正常解析 WXML
-      ...(fromAttribute && { printWidth: ATTRIBUTE_MUSTACHE_PRINT_WIDTH }),
-    }
-
-    try {
-      formatted = await formatMustacheInner(inner, options, throwOnError, formatOverrideOptions)
-    } catch (err) {
-      if (throwOnError) throw err
-      formatted = null
-    }
-    if (formatted === null && inner.trim() !== '') {
-      formatFailCount += 1
-    }
-    mustaches.push({ start, end, raw, formatted })
-  }
-
-  if (formatFailCount > 0 && reportLevel === WXML_REPORT_LEVEL.WARN && !throwOnError) {
-    warnPartial(filepath, formatFailCount)
-  }
-
-  return { type: 'wxml-root', source: text, mustaches }
+  return { type: 'wxml-root', source: text, formattedSource }
 }
 
 /**
@@ -172,41 +153,21 @@ function getReportLevel(options: WxmlPluginOptions): WxmlReportLevel {
 }
 
 /**
- * 输出“部分 mustache 失败”的文件级 warning。
- * @param filepath 当前文件路径
- * @param count 未能格式化的 mustache 数量
+ * formatWxml pass 的异常处理策略，默认 warn（不中断）。
+ * @param options 当前文件格式化选项
  */
-function warnPartial(filepath: string | undefined, count: number): void {
-  const fp = filepath ?? '<stdin>'
-  console.warn(`${LOG_PREFIX} partial ${fp}: expression-format-failed x${count}`)
+function getFormatOnError(options: WxmlPluginOptions): WxmlFormatOnError {
+  return options.wxmlFormatOnError === WXML_FORMAT_ON_ERROR.THROW
+    ? WXML_FORMAT_ON_ERROR.THROW
+    : WXML_FORMAT_ON_ERROR.WARN
 }
 
 /**
- * 输出“整文件跳过”的文件级 warning。
+ * 输出流水线 warning。
  * @param filepath 当前文件路径
- * @param reason 跳过原因
+ * @param message warning 内容
  */
-function warnSkipped(filepath: string | undefined, reason: string): void {
+function warnPipeline(filepath: string | undefined, message: string): void {
   const fp = filepath ?? '<stdin>'
-  console.warn(`${LOG_PREFIX} skipped ${fp}: wxml-parse-failed: ${reason}`)
-}
-
-/**
- * 仅在属性 mustache 场景下，通过 mustache 左右邻接字符推断内层字符串单双引号偏好。
- * @param source 完整源文本
- * @param start mustache 起始偏移（指向 `{{`）
- * @param end mustache 结束偏移（指向 `}}` 之后）
- */
-function inferInnerSingleQuoteByNeighbors(
-  source: string,
-  start: number,
-  end: number
-): boolean | undefined {
-  const left = source[start - 1]
-  let i = end
-  while (i < source.length && /\s/.test(source[i])) i += 1
-  const right = source[i]
-  if (left === '"' && right === '"') return true
-  if (left === "'" && right === "'") return false
-  return undefined
+  console.warn(`${LOG_PREFIX} ${fp}: ${message}`)
 }

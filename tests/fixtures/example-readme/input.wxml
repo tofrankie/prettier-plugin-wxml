@@ -1,0 +1,15 @@
+<view>{{username}}</view>
+<view>{{count+1}}</view>
+<view wx:if="{{flag}}" data-score="{{count*2+1}}"></view>
+
+<view></view>
+
+<image class="icon" src="{{flag?'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World':'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World'}}" mode="aspectFill"></image>
+
+<!-- prettier-ignore -->
+<view>{{c+d}}</view>
+<view>{{e+f}}</view>
+
+
+<!-- invalid: {{'invalid expression cases'}} -->
+<view>{{foo+}}</view>
