@@ -10,5 +10,11 @@ export default {
         parser: 'wxml',
       },
     },
+    {
+      files: '*.wxs',
+      options: {
+        parser: 'babel',
+      },
+    }
   ],
 }

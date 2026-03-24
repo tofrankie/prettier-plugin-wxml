@@ -1,3 +1,14 @@
+<wxs src="./../../wxs/tools.wxs" module="tools" />
+<wxs module="tool">
+  var tool = {
+    dataFormatter: function (data) {
+      if (!data) return data
+      return data > 99 ? '99+' : data
+    },
+  }
+  module.exports = tool
+</wxs>
+
 <nav nav-type="search" />
 <view class="home-container">
   <view class="home-content">
@@ -8,6 +19,11 @@
           bind:refresh="onRefresh"
           loadingTexts="{{ ['下拉刷新', '松手刷新', '正在刷新', '刷新完成'] }}"
         >
+          <!-- wxs test code -->
+          <view> {{ tools.msg }} </view>
+          <view> {{ tools.bar(tools.FOO) }} </view>
+          <view> {{ tool.dataFormatter(100) }} </view>
+
           <view class="home-card-list">
             <t-swiper
               list="{{ swiperList }}"
