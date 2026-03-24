@@ -64,6 +64,13 @@ export const options = {
     description:
       "Run a full-file Vue formatting pass (`parser: 'vue'`) before mustache formatting.",
   },
+  wxmlFormatWxs: {
+    type: 'boolean' as const,
+    category: 'WXML',
+    default: true,
+    description:
+      'When true (default), extract inline <wxs> body, run WXML pipeline, then merge babel-formatted body and normalize layout. When false, skip wxs body formatting.',
+  },
   wxmlFormatOnError: {
     type: 'choice' as const,
     category: 'WXML',
@@ -124,6 +131,7 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
     selfCloseEnabled: pluginOptions.wxmlSelfClose !== false,
     selfCloseExclude: pluginOptions.wxmlSelfCloseExclude,
     formatEnabled: pluginOptions.wxmlFormat !== false,
+    formatWxsEnabled: pluginOptions.wxmlFormatWxs !== false,
     formatOnError,
     throwOnError,
     onWarn(message) {

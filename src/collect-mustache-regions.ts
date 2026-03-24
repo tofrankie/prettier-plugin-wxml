@@ -50,6 +50,15 @@ class MustacheRegionCollector extends RecursiveVisitor {
     super.visitCdata(ast, context)
   }
 
+  override visitElement(ast: Extract<Ast.Node, { kind: 'element' }>, context: unknown): void {
+    if (ast.name.toLowerCase() === 'wxs') {
+      visitAll(this, ast.attrs, context)
+      visitAll(this, ast.directives, context)
+      return
+    }
+    super.visitElement(ast, context)
+  }
+
   override visitAttribute(ast: Extract<Ast.Node, { kind: 'attribute' }>, context: unknown): void {
     if (ast.valueSpan && ast.value.includes('{{')) {
       const quote = this.detectAttributeQuote(ast.valueSpan)

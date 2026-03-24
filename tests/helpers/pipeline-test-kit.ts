@@ -7,8 +7,12 @@ import { runFormatWxmlPass } from '../../src/pipeline/format-wxml-pass'
 import { runMustachePass } from '../../src/pipeline/mustache-pass'
 import { runWxmlPipeline } from '../../src/pipeline/run-wxml-pipeline'
 import { runSelfClosePass } from '../../src/pipeline/self-close-pass'
+import {
+  extractInlineWxsForPipeline,
+  mergeFormattedWxsInlineBlocks,
+} from '../../src/pipeline/wxs-inline-pass'
 
-/** 流水线阶段（顺序固定为 selfClose → formatWxml → mustache）。 */
+/** 流水线阶段（顺序固定为 wxs 抽取 → selfClose → formatWxml → mustache → wxs 合并）。 */
 export const PIPELINE_STAGE_ORDER = ['selfClose', 'formatWxml', 'mustache'] as const
 export type PipelineStage = (typeof PIPELINE_STAGE_ORDER)[number]
 
@@ -24,6 +28,8 @@ export interface RunPipelineStagesArgs {
   formatOnError?: WxmlFormatOnError
   throwOnError?: boolean
   onWarn?: (msg: string) => void
+  /** 与 `wxmlFormatWxs` 一致；默认 true。为 false 时不抽取/合并内联 wxs。 */
+  formatWxsEnabled?: boolean
 }
 
 function noopWarn() {}
@@ -41,10 +47,14 @@ export async function runPipelineStages(args: RunPipelineStagesArgs): Promise<st
     formatOnError = 'warn',
     throwOnError = false,
     onWarn = noopWarn,
+    formatWxsEnabled = true,
   } = args
 
   const want = new Set(stages)
-  let current = source
+  const { source: afterWxsExtract, blocks: wxsInlineBlocks } = extractInlineWxsForPipeline(source, {
+    formatWxsEnabled,
+  })
+  let current = afterWxsExtract
 
   if (want.has('selfClose')) {
     current = runSelfClosePass(current, selfCloseExclude, onWarn)
@@ -64,10 +74,15 @@ export async function runPipelineStages(args: RunPipelineStagesArgs): Promise<st
       throwOnError,
       onWarn,
     })
-    return current
   }
 
-  return current
+  return mergeFormattedWxsInlineBlocks({
+    source: current,
+    blocks: wxsInlineBlocks,
+    prettierOptions,
+    onWarn,
+    formatWxsEnabled,
+  })
 }
 
 /**

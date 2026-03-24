@@ -186,6 +186,7 @@ describe('WXML 流水线', () => {
         ...common,
         selfCloseEnabled: true,
         formatEnabled: true,
+        formatWxsEnabled: true,
       })
       const b = await runPipelineStages({
         source,

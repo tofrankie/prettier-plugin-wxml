@@ -1,0 +1,11 @@
+<wxs module="tools" src="./tools.wxs"></wxs>
+
+<view>{{tools.msg}}</view>
+
+<wxs module="m">var x=1;module.exports={x:x}</wxs>
+
+<wxs module="tool">
+var tool = { dataFormatter: function(data) { if (!data) return data; return data > 99 ?
+"99+" : data; } }; module.exports = tool
+</wxs>
+<view>{{tool.dataFormatter(100)}}</view>

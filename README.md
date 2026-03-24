@@ -13,6 +13,7 @@
 - 对 WXML 插值表达式进行格式化 `{{count+1}}` → `{{ count + 1 }}`
 - 对 WXML 空内容元素自闭合（self-close） `<view></view>` → `<view />`
 - 对 WXML 文件进行统一的格式化（缩进换行）
+- 对 WXML 文件中的 WXS 格式化
 - 针对 WXML 特有规则进行处理，以尽可能地适配所有 WXML 规则，避免小程序解析 WXML 失败
 
 > 假设解析 WXML 过程遇到解析异常，则会尽可能地保持原样。如 `{{ }}` 被编辑器自动保存不合理地折行、插值使用不合法的表达式（如 `{{foo+}}`）等。
@@ -70,17 +71,17 @@ pnpm add -D prettier @tofrankie/prettier-plugin-wxml
 
 若是项目使用，可以在配置文件（如 `prettier.config.js`）中注册插件，并指定 `parser` 为 `wxml`：
 
-```json
-{
-  "plugins": ["@tofrankie/prettier-plugin-wxml"],
-  "overrides": [
+```js
+export default {
+  plugins: ['@tofrankie/prettier-plugin-wxml'],
+  overrides: [
     {
-      "files": "*.wxml",
-      "options": {
-        "parser": "wxml"
-      }
-    }
-  ]
+      files: '*.wxml',
+      options: {
+        parser: 'wxml',
+      },
+    },
+  ],
 }
 ```
 
@@ -108,16 +109,17 @@ module.exports = {
 
 插件支持插值格式化（默认开启且不可关闭），还提供了整体的代码格式化（默认开启，可选开/关），包括代码缩进和自闭合处理。
 
-> 默认情况下，内部流程先处理 selfClose，再格式化和缩进，最后处理插值。
+> 默认情况下，内部流程先抽取内联 `wxs` 正文（占位）→ selfClose → Vue 整文件排版 → 插值 → 合并 `wxs` 正文（`babel`）并整理 `wxs` 块布局（起止标签各占一行，类似 `<script>`）。
 
-| 选项                   | 类型                           | 默认       | 说明                                                                                                       |
-| ---------------------- | ------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `wxmlThrowOnError`     | `boolean`                      | `false`    | 为 `true` 时，WXML 解析失败或某一插值无法安全格式化时抛出原始错误，便于排查。                              |
-| `wxmlReportLevel`      | `'silent'` \| `'warn'`         | `'silent'` | 为 `warn` 时，在容错回退（整文件跳过或部分插值未改）时向 `console.warn` 输出提示（含 `filepath`）。        |
-| `wxmlFormat`           | `boolean`                      | `true`     | 为 `false` 时跳过整文件排版。                                                                              |
-| `wxmlFormatOnError`    | `'warn'` \| `'throw'`          | `'warn'`   | Vue 排版阶段失败时告警并回退该阶段输入，或直接抛错。                                                       |
-| `wxmlSelfClose`        | `boolean`                      | `true`     | 为 `false` 时跳过自闭合；默认对**无子内容**的成对标签做 **selfClose**（如 `<view></view>` → `<view />`）。 |
-| `wxmlSelfCloseExclude` | `string[]` \| `() => string[]` | `[]`       | 指定不做 selfClose 的标签名数组（小写匹配）。空数组表示不排除任何标签。                                    |
+| 选项                   | 类型                           | 默认       | 说明                                                                                                        |
+| ---------------------- | ------------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `wxmlThrowOnError`     | `boolean`                      | `false`    | 为 `true` 时，WXML 解析失败或某一插值无法安全格式化时抛出原始错误，便于排查。                               |
+| `wxmlReportLevel`      | `'silent'` \| `'warn'`         | `'silent'` | 为 `warn` 时，在容错回退（整文件跳过或部分插值未改）时向 `console.warn` 输出提示（含 `filepath`）。         |
+| `wxmlFormat`           | `boolean`                      | `true`     | 为 `false` 时跳过整文件排版。                                                                               |
+| `wxmlFormatWxs`        | `boolean`                      | `true`     | 为 `false` 时不抽取内联 `<wxs>` 正文、不 babel 合并、不整理 wxs 块布局；仍参与 selfClose / Vue / mustache。 |
+| `wxmlFormatOnError`    | `'warn'` \| `'throw'`          | `'warn'`   | Vue 排版阶段失败时告警并回退该阶段输入，或直接抛错。                                                        |
+| `wxmlSelfClose`        | `boolean`                      | `true`     | 为 `false` 时跳过自闭合；默认对**无子内容**的成对标签做 **selfClose**（如 `<view></view>` → `<view />`）。  |
+| `wxmlSelfCloseExclude` | `string[]` \| `() => string[]` | `[]`       | 指定不做 selfClose 的标签名数组（小写匹配）。空数组表示不排除任何标签。                                     |
 
 > 若开启 `wxmlThrowOnError` 等用于排查失败，记得 Prettier CLI 检查是否使用了 `--log-level silent`，它会屏蔽输出。
 
@@ -172,8 +174,10 @@ WXML 支持属性写成 `wx:for="{{[1,2,3]}} "`（[详见](https://developers.we
 - 默认 `wxmlThrowOnError: false`：`parseHtml` 失败则整文件不变；某一插值表达式失败则仅该插值不变，其余继续。
 - `wxmlThrowOnError: true`：上述错误直接抛出。
 - `wxmlReportLevel: 'warn'`：在容错回退时向 `console.warn` 输出一行提示，例如：
-  - `[@tofrankie/prettier-plugin-wxml] skipped <filepath>: wxml-parse-failed: <message>`
-  - `[@tofrankie/prettier-plugin-wxml] partial <filepath>: expression-format-failed x<N>`
+  - `[@tofrankie/prettier-plugin-wxml] <filepath>: wxml-format-failed: <message>`
+  - `[@tofrankie/prettier-plugin-wxml] <filepath>: mustache-collect-failed: <message>`
+  - `[@tofrankie/prettier-plugin-wxml] <filepath>: expression-format-failed x<N>`
+  - 内联 `wxs` 正文无法被 `babel` 格式化时：`wxs-inline-format-failed: block <id>`
 
 ## ❓ 常见问题
 

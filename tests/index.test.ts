@@ -18,6 +18,7 @@ type FormatOptions = Pick<
   | 'wxmlThrowOnError'
   | 'wxmlReportLevel'
   | 'wxmlFormat'
+  | 'wxmlFormatWxs'
   | 'wxmlFormatOnError'
   | 'wxmlSelfClose'
   | 'wxmlSelfCloseExclude'
@@ -52,6 +53,7 @@ async function formatRaw(source: string, opts: FormatOptions = {}) {
     ...(opts.wxmlThrowOnError !== undefined && { wxmlThrowOnError: opts.wxmlThrowOnError }),
     ...(opts.wxmlReportLevel !== undefined && { wxmlReportLevel: opts.wxmlReportLevel }),
     ...(opts.wxmlFormat !== undefined && { wxmlFormat: opts.wxmlFormat }),
+    ...(opts.wxmlFormatWxs !== undefined && { wxmlFormatWxs: opts.wxmlFormatWxs }),
     ...(opts.wxmlFormatOnError !== undefined && { wxmlFormatOnError: opts.wxmlFormatOnError }),
     ...(opts.wxmlSelfClose !== undefined && {
       wxmlSelfClose: opts.wxmlSelfClose,
@@ -429,6 +431,20 @@ describe('prettier-plugin-wxml', () => {
     expect(warn).toHaveBeenCalled()
     expect(String(warn.mock.calls[0]?.[0])).toContain('wxml-format-failed')
     warn.mockRestore()
+  })
+
+  it('内联 wxs：正文走 babel 排版且不把 var 改成 let', async () => {
+    const src = '<wxs module="m">var a=1\nmodule.exports={a:a}</wxs>'
+    const out = await format(src, { wxmlFormat: true })
+    expect(out).toMatch(/var a\b/)
+    expect(out).not.toMatch(/\blet a\b/)
+    expect(out).toContain('module.exports')
+  })
+
+  it('wxmlFormatWxs=false：不抽取内联 wxs，正文不经 babel 合并', async () => {
+    const src = '<wxs module="m">var x=1\nmodule.exports={x}</wxs>'
+    const out = await format(src, { wxmlFormat: false, wxmlFormatWxs: false })
+    expect(out).toBe(src)
   })
 
   it('wxmlFormatOnError=throw：formatWxml pass 失败时直接抛错', async () => {

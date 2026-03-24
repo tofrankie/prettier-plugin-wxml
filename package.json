@@ -16,6 +16,7 @@
     "prettier",
     "plugin",
     "wxml",
+    "wxs",
     "wechat",
     "miniprogram",
     "format",
@@ -47,6 +48,7 @@
     "node": ">=18"
   },
   "scripts": {
+    "dev": "tsdown --watch",
     "build": "tsdown",
     "lint": "run-s lint:eslint lint:prettier tsc",
     "lint:eslint": "eslint . --cache --fix",

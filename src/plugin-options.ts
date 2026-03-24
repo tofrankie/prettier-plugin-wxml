@@ -15,6 +15,8 @@ export interface WxmlPluginOptions extends Options {
   wxmlReportLevel?: WxmlReportLevel
   /** 为 true（默认）时在 mustache 之前对整文件跑一次 `parser: 'vue'` 排版；false 则跳过该阶段。 */
   wxmlFormat?: boolean
+  /** 为 true（默认）时抽取内联 `wxs` 正文、纯 WXML 阶段后再用 `babel` 合并并整理块布局；false 则完全不处理内联 wxs 正文（仍参与 selfClose / Vue / mustache）。 */
+  wxmlFormatWxs?: boolean
   /** 整文件 format pass 抛错时：`warn` 告警并回退到该阶段输入串；`throw` 直接终止。 */
   wxmlFormatOnError?: WxmlFormatOnError
   /** 为 false 时跳过自闭合阶段；默认 true（与 `wxmlFormat` 一致，关时需显式传 `wxmlSelfClose: false`）。 */

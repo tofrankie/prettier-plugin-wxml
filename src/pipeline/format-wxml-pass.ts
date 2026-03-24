@@ -69,7 +69,6 @@ function stripSingleWrapperIndent(source: string, prettierOptions: Options): str
       const hasEnd = line.includes('-->')
       const shouldSkip = inHtmlCommentBlock
 
-      // 更新多行注释状态（单行注释不进入 block 状态）。
       if (!inHtmlCommentBlock && hasStart && !hasEnd) {
         inHtmlCommentBlock = true
       } else if (inHtmlCommentBlock && hasEnd) {
