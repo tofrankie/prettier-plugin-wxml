@@ -1,16 +1,9 @@
 {
+  "extends": "@tofrankie/tsconfig/node.lib.tsdown.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
     "types": ["node"],
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false
   },
-  "include": ["src", "tests", "vitest.config.ts", "tsdown.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "tests", "vitest.config.ts", "tsdown.config.ts"]
 }
