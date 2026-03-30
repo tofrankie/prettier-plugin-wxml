@@ -22,6 +22,7 @@ export interface RunWxmlPipelineOptions {
   selfCloseExclude?: string[]
   formatEnabled: boolean
   formatWxsEnabled: boolean
+  organizeAttributesEnabled?: boolean
   throwOnError: boolean
   onWarn: (message: string) => void
 }
@@ -33,6 +34,7 @@ export async function runWxmlPipeline(options: RunWxmlPipelineOptions): Promise<
     selfCloseExclude,
     formatEnabled,
     formatWxsEnabled,
+    organizeAttributesEnabled = false,
     throwOnError,
     prettierOptions,
     onWarn,
@@ -52,6 +54,7 @@ export async function runWxmlPipeline(options: RunWxmlPipelineOptions): Promise<
     current = await runFormatWxmlPass({
       source: current,
       prettierOptions,
+      organizeAttributesEnabled,
       throwOnError,
       onWarn,
     })

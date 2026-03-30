@@ -1,7 +1,9 @@
 {
-  "wxmlStrict": false,
+  "wxmlStrict": true,
+  "wxmlFallbackLog": true,
   "wxmlFormat": true,
   "wxmlSelfClose": true,
+  "wxmlSelfCloseExclude": [],
   "wxmlOrganizeAttributes": true,
   "attributeSort": "ASC",
   "attributeIgnoreCase": true,

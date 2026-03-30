@@ -1,6 +1,8 @@
 import type { Options } from 'prettier'
+import type { PrettierPluginOrganizeAttributesParserOptions } from 'prettier-plugin-organize-attributes'
 
-export interface WxmlPluginOptions extends Options {
+export interface WxmlPluginOptions
+  extends Options, Partial<PrettierPluginOrganizeAttributesParserOptions> {
   /**
    * 是否严格模式（默认 `true`）。
    * 开启时：解析或格式化失败会抛出错误。关闭时：尽量保留可运行内容并跳过无法处理的部分；是否打印提示见 `wxmlFallbackLog`。
@@ -21,8 +23,13 @@ export interface WxmlPluginOptions extends Options {
    */
   wxmlSelfClose?: boolean
   /**
-   * 在开启自闭合时，指定不做处理的标签名（小写数组）。空数组表示不排除。
+   * 在 `wxmlSelfClose` 开启时，指定不做处理的标签名（小写数组）。空数组表示不排除。
    * 仅在 Prettier 配置里写 `string[]`；若要在代码里动态生成列表，请使用 `resolveSelfCloseExcludeSet`。
    */
   wxmlSelfCloseExclude?: string[]
+  /**
+   * 在 `wxmlFormat` 开启时，使用 `prettier-plugin-organize-attributes` 对属性进行排序。
+   * 默认 `false`。与 `attributeGroups`、`attributeSort`、`attributeIgnoreCase` 配合使用，详见 {@link https://github.com/NiklasPor/prettier-plugin-organize-attributes | prettier-plugin-organize-attributes}。
+   */
+  wxmlOrganizeAttributes?: boolean
 }

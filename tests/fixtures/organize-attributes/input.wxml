@@ -1,0 +1,82 @@
+<wxs module="tools" src="./tools.wxs"></wxs>
+
+<view>{{tools.msg}}</view>
+
+<wxs module="m">var x=1;module.exports={x:x}</wxs>
+
+<wxs module="tool">
+var tool = { dataFormatter: function(data) { if (!data) return data; return data > 99 ?
+"99+" : data; } }; module.exports = tool
+</wxs>
+<view>{{tool.dataFormatter(100)}}</view>
+
+<view class="container">
+  <custom-nav-bar front-color="white" background-color="transparent" scroll-background-color="#f11d18">
+    <image class="logo" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+  </custom-nav-bar>
+
+  <view class="main-poster"></view>
+
+  <view class="card-box {{hasLotteryChance ? 'card-box-with-bgimage' : ''}}" id="card-box">
+    <block wx:if="{{!hasLotteryChance}}">
+      <view class="center card-title">我的会员编号</view>
+      <view wx:if="{{memberIdVisible}}" class="card-absolute">{{userInfo.member_id}}</view>
+      <view wx:else class="card-absolute card-empty"></view>
+      <image class="card-absolute card-rect-icon" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+    </block>
+    <block wx:else>
+      <view class="card-relative card-member-id">会员编号：{{userInfo.member_id || '-'}}</view>
+      <view class="card-relative card-member-name">{{userInfo.member_name || '-'}}</view>
+      <view class="card-relative card-trade-union">{{userInfo.trade_union || '-'}}</view>
+      <view class="card-relative card-identified-time">{{userInfo.identityVerifiedAt || '-'}} 成为会员</view>
+    </block>
+
+    <image wx:if="{{btnStatus === 'participation'}}" style="display: none;" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+    <block wx:if="{{scanAnimationVisiable}}">
+      <view class="card-scan-bg"></view>
+      <view class="card-scan-content">
+        <view class="card-absolute">{{userInfo.member_id}}</view>
+        <image class="card-absolute card-rect-icon" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+      </view>
+      <image class="card-scan-gif" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+    </block>
+  </view>
+
+  <view class="center main-btn {{btnConfig.DISABLED ? 'main-btn-disabled': ''}}" catchtap="{{btnConfig.METHOD}}">
+    {{btnConfig.TEXT}}
+  </view>
+
+  <view class="rule-and-share">
+    <image class="rule" bindtap="navToRules" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+    <image class="share" bindtap="toggleShareModal" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+  </view>
+
+  <view class="prize-intro">随机获得以下奖品中的一份</view>
+  <view class="prize-list">
+    <view class="prize-item" wx:for="{{prizeList}}" wx:key="id">
+      <image mode="aspectFit" class="prize-image" src="{{item.image}}" />
+      <view class="prize-info">
+        <view class="prize-name">{{item.name}}</view>
+        <view class="prize-inventory">{{item.inventory}} 份</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<share-modal
+  visible="{{shareModalVisible}}"
+  poster-height="940rpx"
+  cover-image="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World"
+  bindclose="toggleShareModal"
+/>
+
+<tips-modal
+  visible="{{tipsModalVisible}}"
+  title="{{tipsModalConfig.TITLE || ''}}"
+  name="{{tipsModalConfig.NAME || ''}}"
+  desc="{{tipsModalConfig.DESC || ''}}"
+  icon="{{tipsModalConfig.ICON || ''}}"
+  button-text="{{tipsModalConfig.BUTTON_TEXT || ''}}"
+  bindconfirm="{{tipsModalConfig.BUTTON_METHOD || ''}}"
+  bindclose="toggleTipsModal"
+/>

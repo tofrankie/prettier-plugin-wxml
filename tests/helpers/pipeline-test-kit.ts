@@ -27,6 +27,8 @@ export interface RunPipelineStagesArgs {
   onWarn?: (msg: string) => void
   /** 与生产流水线中 `wxmlFormat` 一致；默认 true。为 false 时不抽取/合并内联 wxs。 */
   formatWxsEnabled?: boolean
+  /** 与 `wxmlOrganizeAttributes` 一致；默认 false。 */
+  organizeAttributesEnabled?: boolean
 }
 
 function noopWarn() {}
@@ -44,6 +46,7 @@ export async function runPipelineStages(args: RunPipelineStagesArgs): Promise<st
     throwOnError = false,
     onWarn = noopWarn,
     formatWxsEnabled = true,
+    organizeAttributesEnabled = false,
   } = args
 
   const want = new Set(stages)
@@ -59,6 +62,7 @@ export async function runPipelineStages(args: RunPipelineStagesArgs): Promise<st
     current = await runFormatWxmlPass({
       source: current,
       prettierOptions,
+      organizeAttributesEnabled,
       throwOnError,
       onWarn,
     })

@@ -6,8 +6,8 @@
 
 <image
   class="icon"
-  src="{{ flag ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}"
   mode="aspectFill"
+  src="{{ flag ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}"
 />
 
 <!-- prettier-ignore -->

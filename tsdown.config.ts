@@ -5,4 +5,5 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   platform: 'node',
+  external: ['prettier-plugin-organize-attributes'],
 })

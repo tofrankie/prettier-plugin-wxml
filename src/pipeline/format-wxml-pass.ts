@@ -1,11 +1,12 @@
 import type { Options } from 'prettier'
 import * as prettier from 'prettier'
+import * as prettierPluginOrganizeAttributes from 'prettier-plugin-organize-attributes'
 
-export function buildWxmlFormatOptions(prettierOptions: Options): Options {
+export function buildWxmlFormatOptions(prettierOptions: Options, organizeEnabled = false): Options {
   return {
     ...prettierOptions,
     parser: 'vue',
-    plugins: [],
+    plugins: organizeEnabled ? [prettierPluginOrganizeAttributes] : [],
     vueIndentScriptAndStyle: false,
   }
 }
@@ -15,18 +16,20 @@ export function buildWxmlFormatOptions(prettierOptions: Options): Options {
  * @param args
  * @param args.source 当前流水线字符串（占位符已替换后的 WXML）
  * @param args.prettierOptions 当前 Prettier 选项
+ * @param args.organizeAttributesEnabled
  * @param args.throwOnError 为 `true` 时 `prettier.format` 失败则抛错；为 `false` 时 `onWarn`（`wxml-format-failed: ...`）并返回 `source`
  * @param args.onWarn 非严格路径告警回调
  */
 export async function runFormatWxmlPass(args: {
   source: string
   prettierOptions: Options
+  organizeAttributesEnabled?: boolean
   throwOnError: boolean
   onWarn: (msg: string) => void
 }): Promise<string> {
-  const { source, prettierOptions, throwOnError, onWarn } = args
+  const { source, prettierOptions, organizeAttributesEnabled = false, throwOnError, onWarn } = args
   try {
-    return await formatByVueParser(source, prettierOptions)
+    return await formatByVueParser(source, prettierOptions, organizeAttributesEnabled)
   } catch (err) {
     if (throwOnError) {
       throw err
@@ -37,12 +40,17 @@ export async function runFormatWxmlPass(args: {
   }
 }
 
-async function formatByVueParser(source: string, prettierOptions: Options): Promise<string> {
+async function formatByVueParser(
+  source: string,
+  prettierOptions: Options,
+  organizeEnabled: boolean
+): Promise<string> {
+  const formatOpts = buildWxmlFormatOptions(prettierOptions, organizeEnabled)
   try {
-    return await prettier.format(source, buildWxmlFormatOptions(prettierOptions))
+    return await prettier.format(source, formatOpts)
   } catch {
     const wrapped = `<template>\n${source}\n</template>`
-    const wrappedFormatted = await prettier.format(wrapped, buildWxmlFormatOptions(prettierOptions))
+    const wrappedFormatted = await prettier.format(wrapped, formatOpts)
     return unwrapTemplateContent(wrappedFormatted, prettierOptions)
   }
 }

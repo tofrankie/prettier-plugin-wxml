@@ -38,12 +38,34 @@ describe('WXML 流水线', () => {
         expect(merged.singleAttributePerLine).toBe(true)
       })
 
+      it('buildWxmlFormatOptions：organize 开启时挂入 organize 插件', () => {
+        const merged = buildWxmlFormatOptions(base, true)
+        expect(merged.parser).toBe('vue')
+        expect(merged.plugins).toHaveLength(1)
+      })
+
       it('runFormatWxmlPass：合法模板与直接 prettier.format(vue) 一致', async () => {
         const src = '<view><text>x</text></view>'
         const expected = await prettier.format(src, buildWxmlFormatOptions(base))
         const out = await runFormatWxmlPass({
           source: src,
           prettierOptions: base,
+          throwOnError: false,
+          onWarn: () => {},
+        })
+        expect(out).toBe(expected)
+      })
+
+      it('runFormatWxmlPass：organize 开启时与带插件的 prettier.format(vue) 一致', async () => {
+        const src = '<view id="i" class="c"></view>'
+        const opts = {
+          ...buildWxmlFormatOptions({ ...base, attributeSort: 'ASC' } as Options, true),
+        }
+        const expected = await prettier.format(src, opts)
+        const out = await runFormatWxmlPass({
+          source: src,
+          prettierOptions: { ...base, attributeSort: 'ASC' } as Options,
+          organizeAttributesEnabled: true,
           throwOnError: false,
           onWarn: () => {},
         })
@@ -197,6 +219,22 @@ describe('WXML 流水线', () => {
       expect(a).toBe(b)
       expect(a).toContain('<view />')
       expect(a).toContain('{{ x + y }}')
+    })
+
+    it('organizeAttributesEnabled 时属性按 Vue preset 分组排序', async () => {
+      const source = '<view id="i" class="c"></view>'
+      const onWarn = vi.fn()
+      const out = await runFullWxmlPipeline({
+        source,
+        prettierOptions: { ...base, attributeSort: 'ASC' } as Options,
+        selfCloseEnabled: false,
+        formatEnabled: true,
+        formatWxsEnabled: true,
+        organizeAttributesEnabled: true,
+        throwOnError: false,
+        onWarn,
+      })
+      expect(out.trim()).toBe('<view class="c" id="i"></view>')
     })
   })
 })

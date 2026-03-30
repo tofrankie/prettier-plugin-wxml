@@ -1,5 +1,9 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.7 (2026-03-31)
+
+- 支持 WXML 元素属性排序（基于 [prettier-plugin-organize-attributes](https://github.com/NiklasPor/prettier-plugin-organize-attributes) 实现）
+
 ## prettier-plugin-wxml@0.0.6 (2026-03-31)
 
 ### Changed

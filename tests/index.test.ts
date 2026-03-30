@@ -20,6 +20,10 @@ type FormatOptions = Pick<
   | 'wxmlFormat'
   | 'wxmlSelfClose'
   | 'wxmlSelfCloseExclude'
+  | 'wxmlOrganizeAttributes'
+  | 'attributeSort'
+  | 'attributeGroups'
+  | 'attributeIgnoreCase'
 >
 
 function getFixtureCaseDirs(): string[] {
@@ -54,6 +58,14 @@ async function formatRaw(source: string, opts: FormatOptions = {}) {
     ...(opts.wxmlSelfClose !== undefined ? { wxmlSelfClose: opts.wxmlSelfClose } : {}),
     ...(opts.wxmlSelfCloseExclude !== undefined
       ? { wxmlSelfCloseExclude: opts.wxmlSelfCloseExclude }
+      : {}),
+    ...(opts.wxmlOrganizeAttributes !== undefined
+      ? { wxmlOrganizeAttributes: opts.wxmlOrganizeAttributes }
+      : {}),
+    ...(opts.attributeSort !== undefined ? { attributeSort: opts.attributeSort } : {}),
+    ...(opts.attributeGroups !== undefined ? { attributeGroups: opts.attributeGroups } : {}),
+    ...(opts.attributeIgnoreCase !== undefined
+      ? { attributeIgnoreCase: opts.attributeIgnoreCase }
       : {}),
   })
 }
@@ -453,5 +465,24 @@ describe('prettier-plugin-wxml', () => {
         wxmlFormat: true,
       })
     ).rejects.toThrow()
+  })
+
+  it('wxmlOrganizeAttributes：内层 Vue 与 organize 插件一起重排属性', async () => {
+    const src = '<view id="i" class="c"></view>'
+    const out = await format(src, {
+      wxmlOrganizeAttributes: true,
+      attributeSort: 'ASC',
+    })
+    expect(out).toBe('<view class="c" id="i" />')
+  })
+
+  it('wxmlFormat=false 时 wxmlOrganizeAttributes 不生效', async () => {
+    const src = '<view id="i" class="c"></view>'
+    const out = await format(src, {
+      wxmlFormat: false,
+      wxmlOrganizeAttributes: true,
+      attributeSort: 'ASC',
+    })
+    expect(out).toBe('<view id="i" class="c" />')
   })
 })

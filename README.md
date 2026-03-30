@@ -9,9 +9,11 @@
 
 ## ✨ 功能特性
 
-- 对 WXML 插值表达式进行格式化 `{{count+1}}` → `{{ count + 1 }}`
-- 对 WXML 空内容元素自闭合（默认开启，可关闭）
-- 对 WXML 文件进行整体格式化，含内联 WXS（默认开启，可关闭）
+- 对 WXML 插值表达式进行格式化（默认开启且不可关闭）
+- 对 WXML 空内容元素自闭合（默认开启）
+- 对 WXML 文件进行整体格式化（默认开启）
+  - 支持内联 WXS 格式化
+  - 支持属性排序（默认关闭）
 
 <!-- prettier-ignore-start -->
 ```html
@@ -43,8 +45,8 @@
 
 <image
   class="icon"
-  src="{{ flag ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}"
   mode="aspectFill"
+  src="{{ flag ? 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' : 'https://placehold.co/600x400/000000/FFFFFF?text=Hello+World' }}"
 />
 
 <!-- prettier-ignore -->
@@ -100,17 +102,21 @@ module.exports = {
 }
 ```
 
-## 🎛️ 选项
+## 🔧 高级选项
 
 插值格式化默认开启且不可关闭，其他可按需选择开启或关闭。
 
-| 选项                   | 类型                         | 默认   | 说明                                                                                                          |
-| ---------------------- | ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| `wxmlStrict`           | `boolean`                    | `true` | 采用严格模式，遇到无法解析或无法安全格式化的内容会抛出错误。为 `false` 时尽量保留原文继续处理。               |
-| `wxmlFallbackLog`      | `boolean`                    | `true` | 遇到无法解析或无法安全格式化的内容会输出提示，但不抛出错误。仅当 `wxmlStrict` 为 `false` 时有效。             |
-| `wxmlFormat`           | `boolean`                    | `true` | 对 WXML 文件整体格式化，并按 JavaScript 的方式格式化内联 `<wxs>` 内容。                                       |
-| `wxmlSelfClose`        | `boolean`                    | `true` | 对空内容元素标签进行自闭合处理。                                                                              |
-| `wxmlSelfCloseExclude` | `string[] \| () => string[]` | `[]`   | 指定不做自闭合处理的标签名数组（小写形式）。空数组表示不排除任何标签。仅在 `wxmlSelfClose` 为 `true` 时有效。 |
+| 选项                     | 类型                         | 默认     | 说明                                                                                                                                                                |
+| ------------------------ | ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wxmlStrict`             | `boolean`                    | `true`   | 采用严格模式，遇到无法解析或无法安全格式化的内容会抛出错误。为 `false` 时尽量保留原文继续处理。                                                                     |
+| `wxmlFallbackLog`        | `boolean`                    | `true`   | 遇到无法解析或无法安全格式化的内容会输出提示，但不抛出错误。仅当 `wxmlStrict` 为 `false` 时有效。                                                                   |
+| `wxmlFormat`             | `boolean`                    | `true`   | 对 WXML 文件整体格式化，并按 JavaScript 的方式格式化内联 `<wxs>` 内容。                                                                                             |
+| `wxmlSelfClose`          | `boolean`                    | `true`   | 对空内容元素标签进行自闭合处理。                                                                                                                                    |
+| `wxmlSelfCloseExclude`   | `string[] \| () => string[]` | `[]`     | 指定不做自闭合处理的标签名数组（小写形式）。空数组表示不排除任何标签。仅在 `wxmlSelfClose` 为 `true` 时有效。                                                       |
+| `wxmlOrganizeAttributes` | `boolean`                    | `false`  | 启用 [`prettier-plugin-organize-attributes`](https://github.com/NiklasPor/prettier-plugin-organize-attributes) 对属性进行排序。仅在 `wxmlFormat` 为 `true` 时生效。 |
+| `attributeGroups`        | `string[]`                   | 上游默认 | [详见](https://github.com/NiklasPor/prettier-plugin-organize-attributes#groups)                                                                                     |
+| `attributeSort`          | `'ASC' \| 'DESC' \| 'NONE'`  | 上游默认 | [详见](https://github.com/NiklasPor/prettier-plugin-organize-attributes#sort)                                                                                       |
+| `attributeIgnoreCase`    | `boolean`                    | 上游默认 | [详见](https://github.com/NiklasPor/prettier-plugin-organize-attributes#case-sensitivity)                                                                           |
 
 > 注意，`prettier --log-level silent` 会屏蔽 Prettier 的输出。
 
@@ -133,6 +139,43 @@ export default {
 }
 ```
 
+若需要同时开启属性排序，提供一份参考：
+
+```js
+export default {
+  plugins: ['@tofrankie/prettier-plugin-wxml'],
+  overrides: [
+    {
+      files: '*.wxml',
+      options: {
+        parser: 'wxml',
+        wxmlOrganizeAttributes: true,
+        attributeSort: 'ASC',
+        attributeIgnoreCase: true,
+        attributeGroups: [
+          '^for$',
+          '^(if|elif|else)$',
+          '^key$',
+          '^for-item$',
+          '^for-index$',
+          '^slot$',
+          '^id$',
+          '^class$',
+          '^hover-class$',
+          '^hover-',
+          '$DEFAULT',
+          '^tap$',
+          '^bind',
+          '^catch',
+          '^on',
+          '^worklet',
+        ],
+      },
+    },
+  ],
+}
+```
+
 ## ❓ 常见问题
 
 ### 关于属性插值 `{{ }}` 外的空格
@@ -148,6 +191,12 @@ WXML 支持属性写成 `wx:for="{{[1,2,3]}} "`（[详见](https://developers.we
 <!-- output -->
 <view wx:for="{{ [1, 2, 3] }} "></view>
 ```
+
+### 开启 `wxmlOrganizeAttributes` 后，缩进排版和属性排序是几次处理？
+
+一次内层 `prettier.format` 同时完成，不需要额外再跑一轮整文件格式化。
+
+`prettier-plugin-organize-attributes` 会在 `parse` 后重排属性，再由同一轮 `print` 产出最终缩进/换行结果。本插件在流水线中会先抽取内联 `<wxs>` 再进入 `vue` parser 格式化，因此不会把内联 `wxs` 正文当作模板属性参与排序。
 
 ### Opening tag "view" not terminated. 与 Unexpected closing tag "view".
 
@@ -167,6 +216,10 @@ WXML 支持属性写成 `wx:for="{{[1,2,3]}} "`（[详见](https://developers.we
 <view data="{{ 'foo' }}"></view>
 <view data='{{ "foo" }}'></view>
 ```
+
+## 🎉 致谢
+
+感谢 [prettier-plugin-organize-attributes](https://github.com/NiklasPor/prettier-plugin-organize-attributes) 提供的属性排序功能。
 
 ## 📄 License
 

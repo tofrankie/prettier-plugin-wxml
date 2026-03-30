@@ -1,6 +1,7 @@
 import type { Options, Parser, Printer, SupportLanguage } from 'prettier'
 import type { WxmlPluginOptions } from './plugin-options'
 import type { WxmlRootAst } from './types'
+import { options as organizeAttributesOptions } from 'prettier-plugin-organize-attributes'
 import { runWxmlPipeline } from './pipeline/run-wxml-pipeline'
 
 const AST_FORMAT = 'wxml-ast'
@@ -32,8 +33,16 @@ export const languages: SupportLanguage[] = [
   },
 ]
 
-/** Prettier 可注册的选项。 */
+/** Prettier 可注册的选项（含 `prettier-plugin-organize-attributes` 的 `attributeGroups` / `attributeSort` / `attributeIgnoreCase`）。 */
 export const options = {
+  ...organizeAttributesOptions,
+  wxmlOrganizeAttributes: {
+    type: 'boolean' as const,
+    default: false,
+    category: 'WXML',
+    description:
+      'When true and wxmlFormat is enabled, load prettier-plugin-organize-attributes in the inner Vue template format pass. Uses attributeGroups, attributeSort, attributeIgnoreCase when set.',
+  },
   wxmlStrict: {
     type: 'boolean' as const,
     default: true,
@@ -106,6 +115,8 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
     selfCloseExclude: pluginOptions.wxmlSelfCloseExclude,
     formatEnabled: pluginOptions.wxmlFormat !== false,
     formatWxsEnabled: pluginOptions.wxmlFormat !== false,
+    organizeAttributesEnabled:
+      pluginOptions.wxmlOrganizeAttributes === true && pluginOptions.wxmlFormat !== false,
     throwOnError,
     onWarn(message) {
       if (strict) return
