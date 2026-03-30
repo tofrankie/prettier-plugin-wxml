@@ -1,9 +1,7 @@
 {
   "extends": "@tofrankie/tsconfig/node.lib.tsdown.json",
   "compilerOptions": {
-    "types": ["node"],
-    "exactOptionalPropertyTypes": false,
-    "noUncheckedIndexedAccess": false
+    "types": ["node"]
   },
   "include": ["src", "tests", "vitest.config.ts", "tsdown.config.ts"]
 }

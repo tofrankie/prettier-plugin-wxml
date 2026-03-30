@@ -15,11 +15,9 @@ const FIXTURES_ROOT = join(__dirname, 'fixtures')
 type FormatOptions = Pick<
   WxmlPluginOptions,
   | 'filepath'
-  | 'wxmlThrowOnError'
-  | 'wxmlReportLevel'
+  | 'wxmlStrict'
+  | 'wxmlFallbackLog'
   | 'wxmlFormat'
-  | 'wxmlFormatWxs'
-  | 'wxmlFormatOnError'
   | 'wxmlSelfClose'
   | 'wxmlSelfCloseExclude'
 >
@@ -50,17 +48,13 @@ async function formatRaw(source: string, opts: FormatOptions = {}) {
     parser: 'wxml',
     plugins: [plugin],
     filepath: opts.filepath ?? 'test.wxml',
-    ...(opts.wxmlThrowOnError !== undefined && { wxmlThrowOnError: opts.wxmlThrowOnError }),
-    ...(opts.wxmlReportLevel !== undefined && { wxmlReportLevel: opts.wxmlReportLevel }),
-    ...(opts.wxmlFormat !== undefined && { wxmlFormat: opts.wxmlFormat }),
-    ...(opts.wxmlFormatWxs !== undefined && { wxmlFormatWxs: opts.wxmlFormatWxs }),
-    ...(opts.wxmlFormatOnError !== undefined && { wxmlFormatOnError: opts.wxmlFormatOnError }),
-    ...(opts.wxmlSelfClose !== undefined && {
-      wxmlSelfClose: opts.wxmlSelfClose,
-    }),
-    ...(opts.wxmlSelfCloseExclude !== undefined && {
-      wxmlSelfCloseExclude: opts.wxmlSelfCloseExclude,
-    }),
+    ...(opts.wxmlStrict !== undefined ? { wxmlStrict: opts.wxmlStrict } : {}),
+    ...(opts.wxmlFallbackLog !== undefined ? { wxmlFallbackLog: opts.wxmlFallbackLog } : {}),
+    ...(opts.wxmlFormat !== undefined ? { wxmlFormat: opts.wxmlFormat } : {}),
+    ...(opts.wxmlSelfClose !== undefined ? { wxmlSelfClose: opts.wxmlSelfClose } : {}),
+    ...(opts.wxmlSelfCloseExclude !== undefined
+      ? { wxmlSelfCloseExclude: opts.wxmlSelfCloseExclude }
+      : {}),
   })
 }
 
@@ -72,6 +66,9 @@ async function format(source: string, opts: FormatOptions = {}) {
 function trimSingleEofNewline(text: string): string {
   return text.endsWith('\n') ? text.slice(0, -1) : text
 }
+
+/** 容错模式（与默认 `wxmlStrict: true` 相对），用于非法表达式等用例 */
+const tolerant = { wxmlStrict: false as const }
 
 describe('prettier-plugin-wxml', () => {
   it('fixtures 输入与 output.wxml 一致', async () => {
@@ -220,22 +217,22 @@ describe('prettier-plugin-wxml', () => {
 
   it('非法表达式原样', async () => {
     const s = '{{foo+}}'
-    expect(await format(s)).toBe(s)
+    expect(await format(s, tolerant)).toBe(s)
   })
 
   it('非法表达式（已是正常空格）原样', async () => {
     const s = '{{ foo+ }}'
-    expect(await format(s)).toBe(s)
+    expect(await format(s, tolerant)).toBe(s)
   })
 
   it('语句类输入原样', async () => {
-    expect(await format('{{ if (a) b }}')).toBe('{{ if (a) b }}')
-    expect(await format('{{ return a }}')).toBe('{{ return a }}')
+    expect(await format('{{ if (a) b }}', tolerant)).toBe('{{ if (a) b }}')
+    expect(await format('{{ return a }}', tolerant)).toBe('{{ return a }}')
   })
 
   it('WXML 解析失败整文件原样', async () => {
     const bad = '<view attr'
-    expect(await format(bad)).toBe(bad)
+    expect(await format(bad, tolerant)).toBe(bad)
   })
 
   it('属性值中 }} 与引号间空格保留', async () => {
@@ -255,33 +252,33 @@ describe('prettier-plugin-wxml', () => {
     expect(await format(s)).toBe('<view data-str=\'{{ "a" }}\' />')
   })
 
-  it('throwOnError：解析失败时抛出', async () => {
+  it('wxmlStrict：解析失败时抛出', async () => {
     const bad = '<view attr'
     await expect(
       prettier.format(bad, {
         parser: 'wxml',
         plugins: [plugin],
         filepath: 'bad.wxml',
-        wxmlThrowOnError: true,
+        wxmlStrict: true,
       })
     ).rejects.toThrow()
   })
 
-  it('throwOnError：非法表达式抛出', async () => {
+  it('wxmlStrict：非法表达式抛出', async () => {
     await expect(
       prettier.format('{{foo+}}', {
         parser: 'wxml',
         plugins: [plugin],
         filepath: 'bad.wxml',
-        wxmlThrowOnError: true,
+        wxmlStrict: true,
       })
     ).rejects.toThrow(/mustache at 1:3/)
   })
 
-  it('wxmlReportLevel=warn：解析失败输出 warning', async () => {
+  it('wxmlFallbackLog：解析失败输出 warning', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const bad = '<view attr'
-    await format(bad, { filepath: 'bad.wxml', wxmlReportLevel: 'warn' })
+    await format(bad, { filepath: 'bad.wxml', ...tolerant, wxmlFallbackLog: true })
     expect(warn).toHaveBeenCalled()
     const combined = warn.mock.calls.map(c => String(c[0])).join('\n')
     expect(combined).toContain('wxml-format-failed')
@@ -290,16 +287,16 @@ describe('prettier-plugin-wxml', () => {
     warn.mockRestore()
   })
 
-  it('wxmlReportLevel=warn：部分插值失败计数', async () => {
+  it('wxmlFallbackLog：部分插值失败计数', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    await format('{{a}}{{foo+}}', { filepath: 'p.wxml', wxmlReportLevel: 'warn' })
+    await format('{{a}}{{foo+}}', { filepath: 'p.wxml', ...tolerant, wxmlFallbackLog: true })
     expect(warn).toHaveBeenCalled()
     expect(String(warn.mock.calls[0]?.[0])).toContain('expression-format-failed')
     expect(String(warn.mock.calls[0]?.[0])).toContain('x1')
     warn.mockRestore()
   })
 
-  it('wxmlReportLevel=warn：非法表达式与语句类插值都会计入失败数', async () => {
+  it('wxmlFallbackLog：非法表达式与语句类插值都会计入失败数', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const source = `
 <text>{{foo+}}</text>
@@ -309,7 +306,7 @@ describe('prettier-plugin-wxml', () => {
 <view data-stmt-if="{{ if (a) b }}"></view>
 <view data-stmt-ret="{{ return a }}"></view>
 `.trim()
-    await format(source, { filepath: 'warn-invalid.wxml', wxmlReportLevel: 'warn' })
+    await format(source, { filepath: 'warn-invalid.wxml', ...tolerant, wxmlFallbackLog: true })
     expect(warn).toHaveBeenCalled()
     expect(String(warn.mock.calls[0]?.[0])).toContain('expression-format-failed')
     expect(String(warn.mock.calls[0]?.[0])).toContain('warn-invalid.wxml')
@@ -317,10 +314,10 @@ describe('prettier-plugin-wxml', () => {
     warn.mockRestore()
   })
 
-  it('默认 silent 不输出 warn', async () => {
+  it('wxmlFallbackLog=false 不输出 warn', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    await format('<view attr', { filepath: 'silent-bad.wxml' })
-    await format('{{bad+}}', { filepath: 'silent-expr.wxml' })
+    await format('<view attr', { filepath: 'silent-bad.wxml', ...tolerant, wxmlFallbackLog: false })
+    await format('{{bad+}}', { filepath: 'silent-expr.wxml', ...tolerant, wxmlFallbackLog: false })
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
   })
@@ -403,7 +400,7 @@ describe('prettier-plugin-wxml', () => {
         plugins: [plugin],
         filepath: 'mustache-protect.wxml',
         wxmlFormat: true,
-        wxmlThrowOnError: true,
+        wxmlStrict: true,
       })
     ).resolves.toContain("item.product.type === 'union_buy_voucher'")
   })
@@ -419,13 +416,13 @@ describe('prettier-plugin-wxml', () => {
     expect(out).toContain("<view> {{ flag ? 'x' : 'y' }}</view>")
   })
 
-  it('wxmlFormatOnError=warn：formatWxml pass 失败时回退并继续（不抛错）', async () => {
+  it('容错：formatWxml pass 失败时回退并继续（不抛错）', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const out = await format('<view attr', {
       wxmlFormat: true,
-      wxmlFormatOnError: 'warn',
-      wxmlReportLevel: 'warn',
+      wxmlFallbackLog: true,
       filepath: 'format-fail.wxml',
+      ...tolerant,
     })
     expect(out).toBe('<view attr')
     expect(warn).toHaveBeenCalled()
@@ -441,20 +438,19 @@ describe('prettier-plugin-wxml', () => {
     expect(out).toContain('module.exports')
   })
 
-  it('wxmlFormatWxs=false：不抽取内联 wxs，正文不经 babel 合并', async () => {
+  it('wxmlFormat=false：不抽取内联 wxs，正文不经 babel 合并', async () => {
     const src = '<wxs module="m">var x=1\nmodule.exports={x}</wxs>'
-    const out = await format(src, { wxmlFormat: false, wxmlFormatWxs: false })
+    const out = await format(src, { wxmlFormat: false })
     expect(out).toBe(src)
   })
 
-  it('wxmlFormatOnError=throw：formatWxml pass 失败时直接抛错', async () => {
+  it('严格（默认）：formatWxml pass 失败时直接抛错', async () => {
     await expect(
       prettier.format('<view attr', {
         parser: 'wxml',
         plugins: [plugin],
         filepath: 'format-fail-throw.wxml',
         wxmlFormat: true,
-        wxmlFormatOnError: 'throw',
       })
     ).rejects.toThrow()
   })

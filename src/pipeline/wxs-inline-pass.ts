@@ -23,8 +23,8 @@ interface WxsInnerRange {
  * 将内联 wxs 正文替换为 HTML 注释占位符，供后续 Vue / mustache 阶段处理。
  * 含 `src` 的外链 wxs 或正文仅空白时不抽取。
  * @param source 原始 WXML 全文
- * @param opts
- * @param opts.formatWxsEnabled 为 false 时不抽取，直接返回原文与空 blocks
+ * @param opts 可选；见下
+ * @param opts.formatWxsEnabled 为 `false` 时不抽取，直接返回原文与空 `blocks`。在插件入口与 `wxmlFormat` 同开同关；程序化调用可单独传入。
  */
 export function extractInlineWxsForPipeline(
   source: string,
@@ -117,13 +117,14 @@ class WxsInlineRangeCollector extends RecursiveVisitor {
 }
 
 /**
- * 将占位符替换为 Prettier babel 格式化后的 wxs 正文（失败则保留原文并告警）。
+ * 将占位符替换为 Prettier babel 格式化后的 wxs 正文；失败时按 `throwOnError` 抛错或保留原文并告警。
  * @param args
  * @param args.source 流水线末段字符串（仍含占位符）
  * @param args.blocks 与 {@link extractInlineWxsForPipeline} 返回的块列表一致
- * @param args.prettierOptions 当前 Prettier 选项
- * @param args.onWarn 告警回调
- * @param args.formatWxsEnabled 为 false 时不合并 babel 结果、不执行 {@link normalizeWxsBlocksLayout}
+ * @param args.prettierOptions 当前 Prettier 选项（传入 `prettier.format` 的 `babel` 子集）
+ * @param args.onWarn 非严格路径上的告警回调（`throwOnError` 为 false 时 babel 失败/占位符缺失会调用）
+ * @param args.formatWxsEnabled 为 `false` 时不做 babel 合并、不执行 {@link normalizeWxsBlocksLayout}（插件中与 `wxmlFormat` 同开同关；程序化调用可单独传入）
+ * @param args.throwOnError 为 `true` 时：某块 babel 格式化失败，或 `source` 中找不到对应 `placeholder`，则抛出（错误信息含 `wxs-inline-format-failed` / `wxs-inline-placeholder-missing`）。为 `false` 或省略时走 `onWarn` 并回退该块或跳过替换；与插件侧 `wxmlStrict` 推导的流水线行为一致
  */
 export async function mergeFormattedWxsInlineBlocks(args: {
   source: string
@@ -131,8 +132,10 @@ export async function mergeFormattedWxsInlineBlocks(args: {
   prettierOptions: Options
   onWarn: (message: string) => void
   formatWxsEnabled?: boolean
+  throwOnError?: boolean
 }): Promise<string> {
   const { source, blocks, prettierOptions, onWarn } = args
+  const throwOnErr = args.throwOnError === true
   const formatWxs = args.formatWxsEnabled !== false
   if (blocks.length === 0) {
     const result = formatWxs ? normalizeWxsBlocksLayout(source, prettierOptions) : source
@@ -145,6 +148,9 @@ export async function mergeFormattedWxsInlineBlocks(args: {
       limit(async (): Promise<{ body: string; applyIndent: boolean }> => {
         const formatted = await tryFormatWxsInner(b.rawInner, prettierOptions)
         if (formatted === null) {
+          if (throwOnErr) {
+            throw new Error(`wxs-inline-format-failed: block ${b.id}`)
+          }
           onWarn(`wxs-inline-format-failed: block ${b.id}`)
           return { body: b.rawInner, applyIndent: false }
         }
@@ -160,6 +166,9 @@ export async function mergeFormattedWxsInlineBlocks(args: {
     const part = mergeParts[i] ?? { body: block.rawInner, applyIndent: false }
     const idx = out.indexOf(block.placeholder)
     if (idx < 0) {
+      if (throwOnErr) {
+        throw new Error(`wxs-inline-placeholder-missing: ${block.placeholder}`)
+      }
       onWarn(`wxs-inline-placeholder-missing: ${block.placeholder}`)
       continue
     }

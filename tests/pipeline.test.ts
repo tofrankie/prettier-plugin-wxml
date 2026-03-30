@@ -44,19 +44,19 @@ describe('WXML 流水线', () => {
         const out = await runFormatWxmlPass({
           source: src,
           prettierOptions: base,
-          formatOnError: 'warn',
+          throwOnError: false,
           onWarn: () => {},
         })
         expect(out).toBe(expected)
       })
 
-      it('runFormatWxmlPass：非法模板且 formatOnError=warn 时回退原串并告警', async () => {
+      it('runFormatWxmlPass：非法模板且 throwOnError=false 时回退原串并告警', async () => {
         const bad = '<view attr'
         const onWarn = vi.fn()
         const out = await runFormatWxmlPass({
           source: bad,
           prettierOptions: base,
-          formatOnError: 'warn',
+          throwOnError: false,
           onWarn,
         })
         expect(out).toBe(bad)
@@ -64,14 +64,14 @@ describe('WXML 流水线', () => {
         expect(String(onWarn.mock.calls[0]?.[0])).toContain('wxml-format-failed')
       })
 
-      it('runFormatWxmlPass：非法模板且 formatOnError=throw 时抛出', async () => {
+      it('runFormatWxmlPass：非法模板且 throwOnError=true 时抛出', async () => {
         const bad = '<view attr'
         const onWarn = vi.fn()
         await expect(
           runFormatWxmlPass({
             source: bad,
             prettierOptions: base,
-            formatOnError: 'throw',
+            throwOnError: true,
             onWarn,
           })
         ).rejects.toThrow()
@@ -178,7 +178,6 @@ describe('WXML 流水线', () => {
         source,
         prettierOptions: base,
         selfCloseExclude: undefined as string[] | undefined,
-        formatOnError: 'warn' as const,
         throwOnError: false,
         onWarn,
       }
@@ -192,7 +191,6 @@ describe('WXML 流水线', () => {
         source,
         stages: ['selfClose', 'formatWxml', 'mustache'],
         prettierOptions: base,
-        formatOnError: 'warn',
         throwOnError: false,
         onWarn,
       })

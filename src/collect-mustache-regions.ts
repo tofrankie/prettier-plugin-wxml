@@ -142,8 +142,8 @@ function collectIgnoreRangesInSiblings(
 }
 
 function isPrettierIgnoreComment(node: Ast.Node): boolean {
-  // TODO: https://prettier.io/docs/ignore#html
-  // prettier-ignore-attribute、prettier-ignore-attribute (mouseup)
+  // 仅识别标准 `prettier-ignore` 注释
+  // `prettier-ignore-start` / attribute 级忽略等未实现 https://prettier.io/docs/ignore#html
   return node.kind === 'comment' && (node.value ?? '').trim().toLowerCase() === 'prettier-ignore'
 }
 

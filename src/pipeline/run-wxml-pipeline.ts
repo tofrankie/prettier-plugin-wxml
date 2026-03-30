@@ -6,18 +6,14 @@ import { extractInlineWxsForPipeline, mergeFormattedWxsInlineBlocks } from './wx
 
 /**
  * WXML 格式化流水线（单向、纯字符串）：
- * 0. 内联 wxs 正文抽取为占位符 → 1. 可选 selfClose → 2. 可选 formatWxml（基于 vue parser）
- * → 3. 必选 mustache（区间仅在末段收集）→ 4. 内联 wxs babel 格式化并合并
- * → 5.（可选，`formatWxsEnabled`）内联 wxs babel 合并与块布局（起止标签独占一行，类 `<script>`）。
- * 各阶段禁止复用上游 offset；某阶段失败且为 warn 时回退该阶段输入串。
+ * 0. 内联 wxs 正文抽取为占位符（`formatWxsEnabled` 与插件 `wxmlFormat` 一致）
+ * 1. 可选 selfClose
+ * 2. 可选 formatWxml（Vue parser）
+ * 3. 必选 mustache（插值仅在此时格式化）
+ * 4. 将占位符换回 babel 排版后的 wxs 正文，并可选规范化 `<wxs>` 块布局（`wxs-inline-pass.ts`；`formatWxsEnabled === false` 时不 babel、不跑布局）
+ *
+ * 各阶段禁止复用上游 offset。`throwOnError === false` 时某阶段失败则 `onWarn` 并回退该阶段输入串。
  */
-
-export const WXML_FORMAT_ON_ERROR = {
-  WARN: 'warn',
-  THROW: 'throw',
-} as const
-
-export type WxmlFormatOnError = (typeof WXML_FORMAT_ON_ERROR)[keyof typeof WXML_FORMAT_ON_ERROR]
 
 export interface RunWxmlPipelineOptions {
   source: string
@@ -26,7 +22,6 @@ export interface RunWxmlPipelineOptions {
   selfCloseExclude?: string[]
   formatEnabled: boolean
   formatWxsEnabled: boolean
-  formatOnError: WxmlFormatOnError
   throwOnError: boolean
   onWarn: (message: string) => void
 }
@@ -38,7 +33,6 @@ export async function runWxmlPipeline(options: RunWxmlPipelineOptions): Promise<
     selfCloseExclude,
     formatEnabled,
     formatWxsEnabled,
-    formatOnError,
     throwOnError,
     prettierOptions,
     onWarn,
@@ -51,14 +45,14 @@ export async function runWxmlPipeline(options: RunWxmlPipelineOptions): Promise<
   let current = afterWxsExtract
 
   if (selfCloseEnabled) {
-    current = runSelfClosePass(current, selfCloseExclude, onWarn)
+    current = runSelfClosePass(current, selfCloseExclude, throwOnError, onWarn)
   }
 
   if (formatEnabled) {
     current = await runFormatWxmlPass({
       source: current,
       prettierOptions,
-      formatOnError,
+      throwOnError,
       onWarn,
     })
   }
@@ -76,5 +70,6 @@ export async function runWxmlPipeline(options: RunWxmlPipelineOptions): Promise<
     prettierOptions,
     onWarn,
     formatWxsEnabled,
+    throwOnError,
   })
 }

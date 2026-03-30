@@ -32,9 +32,11 @@ describe.skipIf(localWxmlFiles.length === 0)('local samples (tests/local/*.wxml)
       parser: 'wxml' as const,
       plugins: [plugin],
       filepath: name,
+      /** 本地样本可能含容错场景，避免默认严格模式抛错 */
+      wxmlStrict: false as const,
     }
     const once = trimSingleEofNewline(await prettier.format(source, opts))
-    // Vue parser 在部分历史样本（如注释中含半结构模板）可能非严格幂等，这里以首轮结果做快照回归。
+    // Vue parser 在部分样本（如注释中含半结构模板）可能非严格幂等，这里以首轮结果做快照回归。
     const snapshotPath = join(LOCAL_SNAPSHOT_DIR, `${name}.formatted.txt`)
     await expect(once).toMatchFileSnapshot(snapshotPath)
   })

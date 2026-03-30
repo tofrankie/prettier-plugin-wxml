@@ -10,17 +10,25 @@ export function buildWxmlFormatOptions(prettierOptions: Options): Options {
   }
 }
 
+/**
+ * Vue parser 整文件排版（含 `<template>` 包裹回退路径）。
+ * @param args
+ * @param args.source 当前流水线字符串（占位符已替换后的 WXML）
+ * @param args.prettierOptions 当前 Prettier 选项
+ * @param args.throwOnError 为 `true` 时 `prettier.format` 失败则抛错；为 `false` 时 `onWarn`（`wxml-format-failed: ...`）并返回 `source`
+ * @param args.onWarn 非严格路径告警回调
+ */
 export async function runFormatWxmlPass(args: {
   source: string
   prettierOptions: Options
-  formatOnError: 'warn' | 'throw'
+  throwOnError: boolean
   onWarn: (msg: string) => void
 }): Promise<string> {
-  const { source, prettierOptions, formatOnError, onWarn } = args
+  const { source, prettierOptions, throwOnError, onWarn } = args
   try {
     return await formatByVueParser(source, prettierOptions)
   } catch (err) {
-    if (formatOnError === 'throw') {
+    if (throwOnError) {
       throw err
     }
     const message = err instanceof Error ? err.message : String(err)

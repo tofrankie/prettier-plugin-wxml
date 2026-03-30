@@ -1,5 +1,13 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.6 (2026-03-31)
+
+### Changed
+
+- 原 `wxmlThrowOnError` 升级为 `wxmlStrict` 选项。
+- 将 `wxmlFormatWxs` 并入 `wxmlFormat` 选项，不再提供独立配置对 wxs 进行格式化
+- 移除 `wxmlThrowOnError`、`wxmlFormatOnError`、`wxmlReportLevel` 选项（详见 README.md）
+
 ## prettier-plugin-wxml@0.0.5 (2026-03-25)
 
 - 支持 WXML 中的 WXS 代码格式化

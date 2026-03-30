@@ -12,7 +12,7 @@ interface ReplacePatch {
 
 /**
  * 将排除配置解析为标签名集合（小写，便于与解析器标签名比较）。
- * @param exclude
+ * @param exclude `wxmlSelfCloseExclude` 或程序化提供的列表/工厂函数
  */
 export function resolveSelfCloseExcludeSet(exclude: WxmlSelfCloseExclude | undefined): Set<string> {
   if (exclude === undefined) return new Set()
@@ -23,8 +23,8 @@ export function resolveSelfCloseExcludeSet(exclude: WxmlSelfCloseExclude | undef
 /**
  * 将无子内容的成对标签改为自闭合（selfClose），如 `<view></view>` -> `<view />`。
  * 默认对符合条件的标签执行 selfClose；`excludeTags` 中的标签名不处理。
- * @param source
- * @param excludeTags
+ * @param source 当前 WXML 字符串
+ * @param excludeTags 不做自闭合的标签名集合（小写）
  */
 export function selfCloseTags(source: string, excludeTags: Set<string>): string {
   const result = parseHtml(source, { canSelfClose: true })

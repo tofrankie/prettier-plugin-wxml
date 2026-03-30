@@ -219,7 +219,7 @@ describe('wxs 端到端（Prettier wxml）', () => {
     expect(once).toMatch(/var y = 2/)
   })
 
-  it('wxs-inline-format-failed：wxmlReportLevel=warn 时输出告警', async () => {
+  it('wxs-inline-format-failed：wxmlFallbackLog 时输出告警', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const src = '<wxs module="m">var x = )(</wxs>'
     await prettier.format(src, {
@@ -228,7 +228,8 @@ describe('wxs 端到端（Prettier wxml）', () => {
       plugins: [plugin],
       filepath: 'bad-wxs.wxml',
       wxmlFormat: true,
-      wxmlReportLevel: 'warn',
+      wxmlStrict: false,
+      wxmlFallbackLog: true,
     })
     expect(warn).toHaveBeenCalled()
     expect(String(warn.mock.calls.join('\n'))).toContain('wxs-inline-format-failed')

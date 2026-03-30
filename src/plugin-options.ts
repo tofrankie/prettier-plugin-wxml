@@ -1,26 +1,28 @@
 import type { Options } from 'prettier'
-import type { WxmlFormatOnError } from './pipeline/run-wxml-pipeline'
-
-export const WXML_REPORT_LEVEL = {
-  SILENT: 'silent',
-  WARN: 'warn',
-} as const
-
-export type WxmlReportLevel = (typeof WXML_REPORT_LEVEL)[keyof typeof WXML_REPORT_LEVEL]
 
 export interface WxmlPluginOptions extends Options {
-  /** 为 true 时：WXML 解析失败或某段 `{{ }}` 无法格式化则抛错；默认 false 则尽量保留原文。 */
-  wxmlThrowOnError?: boolean
-  /** `warn` 时在回退/跳过时 `console.warn`；`silent` 不额外打日志。 */
-  wxmlReportLevel?: WxmlReportLevel
-  /** 为 true（默认）时在 mustache 之前对整文件跑一次 `parser: 'vue'` 排版；false 则跳过该阶段。 */
+  /**
+   * 是否严格模式（默认 `true`）。
+   * 开启时：解析或格式化失败会抛出错误。关闭时：尽量保留可运行内容并跳过无法处理的部分；是否打印提示见 `wxmlFallbackLog`。
+   */
+  wxmlStrict?: boolean
+  /**
+   * 在非严格模式下，是否在容错时向 `console.warn` 输出提示。
+   * 默认 `true`；设为 `false` 可静默。**在严格模式下本选项不生效**。
+   */
+  wxmlFallbackLog?: boolean
+  /**
+   * 是否对 WXML 做整文件缩进换行排版，并格式化其中的内联 WXS（默认 `true`）。
+   * 关闭时跳过上述排版；插值表达式 `{{ }}` 的格式化仍会进行（除非整文件无法解析）。
+   */
   wxmlFormat?: boolean
-  /** 为 true（默认）时抽取内联 `wxs` 正文、纯 WXML 阶段后再用 `babel` 合并并整理块布局；false 则完全不处理内联 wxs 正文（仍参与 selfClose / Vue / mustache）。 */
-  wxmlFormatWxs?: boolean
-  /** 整文件 format pass 抛错时：`warn` 告警并回退到该阶段输入串；`throw` 直接终止。 */
-  wxmlFormatOnError?: WxmlFormatOnError
-  /** 为 false 时跳过自闭合阶段；默认 true（与 `wxmlFormat` 一致，关时需显式传 `wxmlSelfClose: false`）。 */
+  /**
+   * 是否将空内容的成对标签改为自闭合（如 `<view></view>` → `<view />`），默认 `true`。
+   */
   wxmlSelfClose?: boolean
-  /** 不参与 selfClose 的标签名。Prettier 配置仅支持 string[]；动态列表见 `resolveSelfCloseExcludeSet`。 */
+  /**
+   * 在开启自闭合时，指定不做处理的标签名（小写数组）。空数组表示不排除。
+   * 仅在 Prettier 配置里写 `string[]`；若要在代码里动态生成列表，请使用 `resolveSelfCloseExcludeSet`。
+   */
   wxmlSelfCloseExclude?: string[]
 }

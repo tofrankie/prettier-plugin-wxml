@@ -1,8 +1,5 @@
 import type { Options } from 'prettier'
-import type {
-  RunWxmlPipelineOptions,
-  WxmlFormatOnError,
-} from '../../src/pipeline/run-wxml-pipeline'
+import type { RunWxmlPipelineOptions } from '../../src/pipeline/run-wxml-pipeline'
 import { runFormatWxmlPass } from '../../src/pipeline/format-wxml-pass'
 import { runMustachePass } from '../../src/pipeline/mustache-pass'
 import { runWxmlPipeline } from '../../src/pipeline/run-wxml-pipeline'
@@ -25,10 +22,10 @@ export interface RunPipelineStagesArgs {
   stages: PipelineStage[]
   prettierOptions: Options
   selfCloseExclude?: string[]
-  formatOnError?: WxmlFormatOnError
+  /** 与 `wxmlStrict` 一致：true 时各阶段遇错抛错；false 时容错并可能 `onWarn`。 */
   throwOnError?: boolean
   onWarn?: (msg: string) => void
-  /** 与 `wxmlFormatWxs` 一致；默认 true。为 false 时不抽取/合并内联 wxs。 */
+  /** 与生产流水线中 `wxmlFormat` 一致；默认 true。为 false 时不抽取/合并内联 wxs。 */
   formatWxsEnabled?: boolean
 }
 
@@ -44,7 +41,6 @@ export async function runPipelineStages(args: RunPipelineStagesArgs): Promise<st
     stages,
     prettierOptions,
     selfCloseExclude,
-    formatOnError = 'warn',
     throwOnError = false,
     onWarn = noopWarn,
     formatWxsEnabled = true,
@@ -57,13 +53,13 @@ export async function runPipelineStages(args: RunPipelineStagesArgs): Promise<st
   let current = afterWxsExtract
 
   if (want.has('selfClose')) {
-    current = runSelfClosePass(current, selfCloseExclude, onWarn)
+    current = runSelfClosePass(current, selfCloseExclude, throwOnError, onWarn)
   }
   if (want.has('formatWxml')) {
     current = await runFormatWxmlPass({
       source: current,
       prettierOptions,
-      formatOnError,
+      throwOnError,
       onWarn,
     })
   }
@@ -82,6 +78,7 @@ export async function runPipelineStages(args: RunPipelineStagesArgs): Promise<st
     prettierOptions,
     onWarn,
     formatWxsEnabled,
+    throwOnError,
   })
 }
 

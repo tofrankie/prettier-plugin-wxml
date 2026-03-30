@@ -7,6 +7,14 @@ import { formatMustacheInner } from '../format-expression'
 const ATTRIBUTE_MUSTACHE_PRINT_WIDTH = 10000
 const MUSTACHE_FORMAT_CONCURRENCY = 4
 
+/**
+ * 收集并格式化 `{{ }}` 插值（含属性内插值）。
+ * @param args
+ * @param args.source 当前流水线字符串
+ * @param args.prettierOptions 当前 Prettier 选项
+ * @param args.throwOnError 为 `true` 时：收集失败或单表达式格式化失败则抛错；为 `false` 时跳过失败区间并汇总 `expression-format-failed` 告警
+ * @param args.onWarn 非严格路径告警（`mustache-collect-failed:` / `expression-format-failed`）
+ */
 export async function runMustachePass(args: {
   source: string
   prettierOptions: Options
