@@ -1,30 +1,19 @@
 import type { Ast, ParseSourceSpan } from 'angular-html-parser'
-import type { MustacheRegion } from './mustache'
+import type { MustacheRegion } from '../mustache-scanner'
 import { parseHtml, RecursiveVisitor, visitAll } from 'angular-html-parser'
-import { extractMustacheRegions } from './mustache'
-
-// angular-html-parser 使用 level=1 表示 fatal error。
-const HTML_FATAL_ERROR_LEVEL = 1
-
-export function hasFatalHtmlParseErrors(result: ReturnType<typeof parseHtml>): boolean {
-  return result.errors.some(e => e.level === HTML_FATAL_ERROR_LEVEL)
-}
+import { extractMustacheRegions } from '../mustache-scanner'
+import { throwIfFatalHtmlParse } from '../utils/html-parse-fatal'
 
 /**
- * 基于 angular-html-parser 提取整份 source 内所有 mustache 绝对区间。
+ * 基于 angular-html-parser 提取整份 `source` 中所有 `{{ }}` 区间（全文绝对下标）。
+ * 单次 `parseHtml` 同时收集标准 `prettier-ignore` 注释覆盖区间与 mustache 区间。
  * @param source 完整 WXML 源码
  */
 export function collectMustacheRegions(source: string): MustacheRegion[] {
-  const ignoreCodeInfo = collectPrettierIgnoreCodeInfo(source)
-  return collectMustacheRegionsByAngular(source, ignoreCodeInfo.ranges)
-}
-
-function collectMustacheRegionsByAngular(
-  source: string,
-  ignoreRanges: Array<{ start: number; end: number }>
-): MustacheRegion[] {
   const result = parseHtml(source, { canSelfClose: true })
-  if (hasFatalHtmlParseErrors(result)) throw new Error(result.errors.map(e => e.msg).join('; '))
+  throwIfFatalHtmlParse(result, true)
+  const ignoreRanges: Array<{ start: number; end: number }> = []
+  collectIgnoreRangesInSiblings(result.rootNodes, ignoreRanges)
   const mustacheRegions: MustacheRegion[] = []
   const collector = new MustacheRegionCollector(source, mustacheRegions, ignoreRanges)
   visitAll(collector, result.rootNodes)
@@ -105,19 +94,6 @@ class MustacheRegionCollector extends RecursiveVisitor {
     }
     return null
   }
-}
-
-function collectPrettierIgnoreCodeInfo(source: string): {
-  ranges: Array<{ start: number; end: number }>
-} {
-  const result = parseHtml(source, { canSelfClose: true })
-  if (hasFatalHtmlParseErrors(result)) {
-    return { ranges: [] }
-  }
-
-  const ranges: Array<{ start: number; end: number }> = []
-  collectIgnoreRangesInSiblings(result.rootNodes, ranges)
-  return { ranges }
 }
 
 function collectIgnoreRangesInSiblings(

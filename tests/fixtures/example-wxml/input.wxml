@@ -42,6 +42,10 @@
   <view>
     <!-- 长属性值，属性值不允许换行 -->
     <view data-long="prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-{{firstValue+1}}-MID-{{secondValue&&thirdValue}}-TAIL-{{ user.profile?.nickname }}-suffix-END"></view>
+    <view style="
+      background: url('https://placehold.co/600x400/000000/FFFFFF/png?text=Hello+World+%23123456')
+        center center no-repeat;
+      background-size: 100% 100%;"></view>
 
     <!-- 多个空格 -->
     <text>{{   a+b   }}</text>

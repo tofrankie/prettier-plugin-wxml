@@ -7,14 +7,14 @@ import { resolveSelfCloseExcludeSet, selfCloseTags } from '../self-close-tags'
  * @param throwOnError 为 `true` 时解析/替换失败则抛错；为 `false` 时 `onWarn` 并返回原文
  * @param onWarn 非严格路径告警（`self-close-failed: ...`）
  */
-export function runSelfClosePass(
+export function runSelfClose(
   source: string,
   selfCloseExclude: string[] | undefined,
   throwOnError: boolean,
   onWarn: (msg: string) => void
 ): string {
   try {
-    return selfCloseTags(source, resolveSelfCloseExcludeSet(selfCloseExclude))
+    return selfCloseTags(source, resolveSelfCloseExcludeSet(selfCloseExclude), throwOnError)
   } catch (err) {
     if (throwOnError) throw err
     const message = err instanceof Error ? err.message : String(err)

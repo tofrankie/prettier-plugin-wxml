@@ -26,5 +26,6 @@ coverage/
 !.env.example
 *.tgz
 .cursor/
+.agents/
 tests/local/
 project.private.config.json

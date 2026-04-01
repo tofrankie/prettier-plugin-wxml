@@ -9,11 +9,7 @@ export interface MustacheRegion {
   preferredInnerSingleQuote?: boolean
 }
 
-const MUSTACHE_SCAN_STATE = {
-  SCAN: 'scan',
-  SINGLE_QUOTE: 'singleQuote',
-  DOUBLE_QUOTE: 'doubleQuote',
-} as const
+type ScanState = 'scan' | 'singleQuote' | 'doubleQuote'
 
 /**
  * 在一段节点内容内提取 `{{`...`}}` 区间（相对 content 的偏移）。
@@ -40,60 +36,58 @@ export function extractMustacheRegions(content: string): MustacheRegion[] {
 }
 
 /**
- * 从 `openIdx` 处的 `{{` 起，找配对的 `}}` 结束下标（不含则返回 null）。
+ * 从 `openIdx` 处的 `{{` 起，找配对的 `}}` 结束下标（未找到则返回 null）。
  * @param content 节点内整段文本
  * @param openIdx 指向 `{{` 的第一个 `{`
  */
 function findMustacheEnd(content: string, openIdx: number): number | null {
   if (content[openIdx] !== '{' || content[openIdx + 1] !== '{') return null
 
-  // 跳过 `{{`，从表达式正文开始扫
   let pos = openIdx + 2
-  type ScanState = (typeof MUSTACHE_SCAN_STATE)[keyof typeof MUSTACHE_SCAN_STATE]
-  let state: ScanState = MUSTACHE_SCAN_STATE.SCAN
+  let state: ScanState = 'scan'
+
   while (pos < content.length) {
     const c = content[pos]
-    // SCAN：在「表达式层」找闭合 `}}`；遇引号则进入字符串，避免串内 `}}` 误匹配
-    if (state === MUSTACHE_SCAN_STATE.SCAN) {
+
+    if (state === 'scan') {
       if (c === "'") {
-        state = MUSTACHE_SCAN_STATE.SINGLE_QUOTE
+        state = 'singleQuote'
         pos += 1
         continue
       }
       if (c === '"') {
-        state = MUSTACHE_SCAN_STATE.DOUBLE_QUOTE
+        state = 'doubleQuote'
         pos += 1
         continue
       }
-      // 唯一合法的闭合：连续的 `}}`（返回 end 为 `}}` 之后下标）
       if (c === '}' && content[pos + 1] === '}') {
         return pos + 2
       }
       pos += 1
       continue
     }
-    // 单引号串内：`\'` 跳过两字符；`'` 结束字符串
-    if (state === MUSTACHE_SCAN_STATE.SINGLE_QUOTE) {
+
+    if (state === 'singleQuote') {
       if (c === '\\') {
         pos += 2
         continue
       }
       if (c === "'") {
-        state = MUSTACHE_SCAN_STATE.SCAN
+        state = 'scan'
         pos += 1
         continue
       }
       pos += 1
       continue
     }
-    // 双引号串内：同上
-    if (state === MUSTACHE_SCAN_STATE.DOUBLE_QUOTE) {
+
+    if (state === 'doubleQuote') {
       if (c === '\\') {
         pos += 2
         continue
       }
       if (c === '"') {
-        state = MUSTACHE_SCAN_STATE.SCAN
+        state = 'scan'
         pos += 1
         continue
       }
@@ -101,6 +95,6 @@ function findMustacheEnd(content: string, openIdx: number): number | null {
       continue
     }
   }
-  // 串结束仍未遇到闭合 `}}`（如 `{{ a`）
+
   return null
 }

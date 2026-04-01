@@ -2,7 +2,7 @@ import type { Options } from 'prettier'
 import * as prettier from 'prettier'
 import * as prettierPluginOrganizeAttributes from 'prettier-plugin-organize-attributes'
 
-export function buildWxmlFormatOptions(prettierOptions: Options, organizeEnabled = false): Options {
+export function buildVueFormatOptions(prettierOptions: Options, organizeEnabled = false): Options {
   return {
     ...prettierOptions,
     parser: 'vue',
@@ -17,10 +17,10 @@ export function buildWxmlFormatOptions(prettierOptions: Options, organizeEnabled
  * @param args.source 当前流水线字符串（占位符已替换后的 WXML）
  * @param args.prettierOptions 当前 Prettier 选项
  * @param args.organizeAttributesEnabled
- * @param args.throwOnError 为 `true` 时 `prettier.format` 失败则抛错；为 `false` 时 `onWarn`（`wxml-format-failed: ...`）并返回 `source`
+ * @param args.throwOnError 为 `true` 时 `prettier.format` 失败则抛错；为 `false` 时 `onWarn` 并返回 `source`
  * @param args.onWarn 非严格路径告警回调
  */
-export async function runFormatWxmlPass(args: {
+export async function runVueFormat(args: {
   source: string
   prettierOptions: Options
   organizeAttributesEnabled?: boolean
@@ -29,7 +29,7 @@ export async function runFormatWxmlPass(args: {
 }): Promise<string> {
   const { source, prettierOptions, organizeAttributesEnabled = false, throwOnError, onWarn } = args
   try {
-    return await formatByVueParser(source, prettierOptions, organizeAttributesEnabled)
+    return await formatWithVueParser(source, prettierOptions, organizeAttributesEnabled)
   } catch (err) {
     if (throwOnError) {
       throw err
@@ -40,12 +40,12 @@ export async function runFormatWxmlPass(args: {
   }
 }
 
-async function formatByVueParser(
+async function formatWithVueParser(
   source: string,
   prettierOptions: Options,
   organizeEnabled: boolean
 ): Promise<string> {
-  const formatOpts = buildWxmlFormatOptions(prettierOptions, organizeEnabled)
+  const formatOpts = buildVueFormatOptions(prettierOptions, organizeEnabled)
   try {
     return await prettier.format(source, formatOpts)
   } catch {

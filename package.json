@@ -73,7 +73,7 @@
   "devDependencies": {
     "@tofrankie/action": "^0.0.5",
     "@tofrankie/eslint": "^0.0.17",
-    "@tofrankie/prettier": "^0.0.11",
+    "@tofrankie/prettier": "^0.0.12",
     "@tofrankie/tsconfig": "^0.0.4",
     "@types/node": "^25.5.0",
     "eslint": "^9.39.4",

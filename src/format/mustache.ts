@@ -1,8 +1,9 @@
 import type { Options } from 'prettier'
-import type { MustacheRegion } from '../mustache'
+import type { MustacheRegion } from '../mustache-scanner'
 import pLimit from 'p-limit'
-import { collectMustacheRegions } from '../collect-mustache-regions'
-import { formatMustacheInner } from '../format-expression'
+import { getLineLeadingIndentAtOffset } from '../utils/line-indent'
+import { collectMustacheRegions } from './collect-mustache'
+import { formatMustacheInner } from './format-mustache-expression'
 
 const ATTRIBUTE_MUSTACHE_PRINT_WIDTH = 10000
 const MUSTACHE_FORMAT_CONCURRENCY = 4
@@ -15,7 +16,7 @@ const MUSTACHE_FORMAT_CONCURRENCY = 4
  * @param args.throwOnError 为 `true` 时：收集失败或单表达式格式化失败则抛错；为 `false` 时跳过失败区间并汇总 `expression-format-failed` 告警
  * @param args.onWarn 非严格路径告警（`mustache-collect-failed:` / `expression-format-failed`）
  */
-export async function runMustachePass(args: {
+export async function runMustache(args: {
   source: string
   prettierOptions: Options
   throwOnError: boolean
@@ -45,7 +46,7 @@ export async function runMustachePass(args: {
       const inner = source.slice(region.start + 2, region.end - 2)
       const quotePreference = region.fromAttribute
         ? (region.preferredInnerSingleQuote ??
-          inferInnerSingleQuoteByNeighbors(source, region.start, region.end))
+          inferQuoteByNeighbors(source, region.start, region.end))
         : undefined
 
       const overrideOptions: Partial<Options> = {
@@ -64,7 +65,7 @@ export async function runMustachePass(args: {
         )
         return { region, inner, formatted, errorDetail: null as string | null }
       } catch (err) {
-        const errorDetail = buildMustacheErrorDetail(source, region, inner, err)
+        const errorDetail = buildErrorDetail(source, region, inner, err)
         if (throwOnError) {
           throw new Error(errorDetail)
         }
@@ -82,7 +83,7 @@ export async function runMustachePass(args: {
       }
       continue
     }
-    const replacement = buildMustacheReplacement(source, region, formatted, prettierOptions)
+    const replacement = buildReplacement(source, region, formatted, prettierOptions)
     out = out.slice(0, region.start) + replacement + out.slice(region.end)
   }
 
@@ -94,7 +95,7 @@ export async function runMustachePass(args: {
   return out
 }
 
-function buildMustacheReplacement(
+function buildReplacement(
   source: string,
   region: MustacheRegion,
   formatted: string,
@@ -104,7 +105,7 @@ function buildMustacheReplacement(
     return `{{ ${formatted} }}`
   }
 
-  const lineIndent = getLineLeadingIndent(source, region.start)
+  const lineIndent = getLineLeadingIndentAtOffset(source, region.start)
   const unit = options.useTabs ? '\t' : ' '.repeat(options.tabWidth ?? 2)
   const body = formatted
     .split('\n')
@@ -113,36 +114,20 @@ function buildMustacheReplacement(
   return `{{\n${body}\n${lineIndent}}}`
 }
 
-function getLineLeadingIndent(source: string, offset: number): string {
-  const lineStart = source.lastIndexOf('\n', Math.max(0, offset - 1)) + 1
-  const line = source.slice(lineStart, offset)
-  // formatWxml pass 可能把 `>` 单独换到上一行属性后的下一行（形如 `\n  >{{`）。
-  // 这种场景如果直接取当前行缩进会多一级，导致下一轮格式化继续漂移。
-  if (/^\s*>$/.test(line)) {
-    const prevLineEnd = Math.max(0, lineStart - 1)
-    const prevLineStart = source.lastIndexOf('\n', Math.max(0, prevLineEnd - 1)) + 1
-    const prevLine = source.slice(prevLineStart, prevLineEnd)
-    const prevMatch = prevLine.match(/^\s*/)
-    return prevMatch?.[0] ?? ''
-  }
-  const m = line.match(/^\s*/)
-  return m?.[0] ?? ''
-}
-
-function buildMustacheErrorDetail(
+function buildErrorDetail(
   source: string,
   region: MustacheRegion,
   inner: string,
   err: unknown
 ): string {
   const abs = region.start + 2
-  const loc = toLineCol(source, abs)
+  const loc = offsetToLineCol(source, abs)
   const message = err instanceof Error ? err.message : String(err)
   const preview = inner.replace(/\s+/g, ' ').slice(0, 80)
   return `mustache at ${loc.line}:${loc.col} (offset ${abs}) "${preview}": ${message}`
 }
 
-function toLineCol(source: string, offset: number): { line: number; col: number } {
+function offsetToLineCol(source: string, offset: number): { line: number; col: number } {
   let line = 1
   let col = 1
   for (let i = 0; i < offset && i < source.length; i += 1) {
@@ -156,11 +141,7 @@ function toLineCol(source: string, offset: number): { line: number; col: number 
   return { line, col }
 }
 
-function inferInnerSingleQuoteByNeighbors(
-  source: string,
-  start: number,
-  end: number
-): boolean | undefined {
+function inferQuoteByNeighbors(source: string, start: number, end: number): boolean | undefined {
   const left = source[start - 1]
   let i = end
   while (i < source.length && /\s/.test(source[i])) i += 1

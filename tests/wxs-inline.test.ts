@@ -2,13 +2,13 @@ import type { Options } from 'prettier'
 import baseOptions from '@tofrankie/prettier'
 import * as prettier from 'prettier'
 import { describe, expect, it, vi } from 'vitest'
-import { collectMustacheRegions } from '../src/collect-mustache-regions'
-import plugin from '../src/index'
+import { collectMustacheRegions } from '../src/format/collect-mustache'
 import {
-  extractInlineWxsForPipeline,
+  extractInlineWxs,
   mergeFormattedWxsInlineBlocks,
   normalizeWxsBlocksLayout,
-} from '../src/pipeline/wxs-inline-pass'
+} from '../src/format/wxs-inline'
+import plugin from '../src/index'
 
 const base = baseOptions as Options
 
@@ -28,17 +28,27 @@ async function formatWxmlSample(source: string) {
   return out.endsWith('\n') ? out.slice(0, -1) : out
 }
 
-describe('wxs 内联抽取（extractInlineWxsForPipeline）', () => {
-  it('formatWxsEnabled=false：不抽取', () => {
-    const src = '<wxs module="m">var a=1</wxs>'
-    const { source, blocks } = extractInlineWxsForPipeline(src, { formatWxsEnabled: false })
-    expect(blocks).toHaveLength(0)
-    expect(source).toBe(src)
+describe('wxs 内联抽取（extractInlineWxs）', () => {
+  it('抽取与 formatWxs 无关；merge 时 formatWxsEnabled=false 原样写回、不跑 babel', async () => {
+    const src = '<wxs module="m">var  x=1</wxs>'
+    const { source, blocks } = extractInlineWxs(src)
+    expect(blocks).toHaveLength(1)
+    expect(source).toMatch(/__WXML_WXS_INLINE_/)
+    const onWarn = vi.fn()
+    const out = await mergeFormattedWxsInlineBlocks({
+      source,
+      blocks,
+      prettierOptions: base,
+      onWarn,
+      formatWxsEnabled: false,
+    })
+    expect(out).toContain('var  x=1')
+    expect(onWarn).not.toHaveBeenCalled()
   })
 
   it('无 src 且有非空白正文：替换为占位注释并记录 rawInner', () => {
     const src = '<wxs module="m">var a=1</wxs>'
-    const { source, blocks } = extractInlineWxsForPipeline(src)
+    const { source, blocks } = extractInlineWxs(src)
     expect(blocks).toHaveLength(1)
     expect(blocks[0].id).toBe(0)
     expect(blocks[0].rawInner).toBe('var a=1')
@@ -48,27 +58,27 @@ describe('wxs 内联抽取（extractInlineWxsForPipeline）', () => {
 
   it('存在 src 属性：不抽取（外链 wxs 走整文件排版）', () => {
     const src = '<wxs src="./a.wxs" module="m">var a=1</wxs>'
-    const { source, blocks } = extractInlineWxsForPipeline(src)
+    const { source, blocks } = extractInlineWxs(src)
     expect(blocks).toHaveLength(0)
     expect(source).toBe(src)
   })
 
   it('属性名 src 大小写不敏感', () => {
     const src = '<wxs SRC="./x" module="m">code</wxs>'
-    const { blocks } = extractInlineWxsForPipeline(src)
+    const { blocks } = extractInlineWxs(src)
     expect(blocks).toHaveLength(0)
   })
 
   it('正文仅空白：不抽取', () => {
     const src = '<wxs module="m">   \n\t  </wxs>'
-    const { source, blocks } = extractInlineWxsForPipeline(src)
+    const { source, blocks } = extractInlineWxs(src)
     expect(blocks).toHaveLength(0)
     expect(source).toBe(src)
   })
 
   it('多个内联 wxs：按文档顺序分配递增 id，从后往前替换不破坏 offset', () => {
     const src = '<wxs module="a">var a=1</wxs><view /><wxs module="b">var b=2</wxs>'
-    const { source, blocks } = extractInlineWxsForPipeline(src)
+    const { source, blocks } = extractInlineWxs(src)
     expect(blocks).toHaveLength(2)
     expect(blocks[0].rawInner.trim()).toBe('var a=1')
     expect(blocks[1].rawInner.trim()).toBe('var b=2')
@@ -80,7 +90,7 @@ describe('wxs 内联抽取（extractInlineWxsForPipeline）', () => {
   it('源码已含占位符文本时：自动换盐值避免碰撞', () => {
     const existing = '<!--__WXML_WXS_INLINE_0_0__-->'
     const src = `<view>${existing}</view><wxs module="m">var a=1</wxs>`
-    const { source, blocks } = extractInlineWxsForPipeline(src)
+    const { source, blocks } = extractInlineWxs(src)
     expect(blocks).toHaveLength(1)
     expect(source).toContain(existing)
     expect(blocks[0].placeholder).not.toBe(existing)
@@ -90,7 +100,7 @@ describe('wxs 内联抽取（extractInlineWxsForPipeline）', () => {
 
   it('HTML 解析致命错误：原样返回且 blocks 为空', () => {
     const bad = '<view attr'
-    const { source, blocks } = extractInlineWxsForPipeline(bad)
+    const { source, blocks } = extractInlineWxs(bad)
     expect(blocks).toHaveLength(0)
     expect(source).toBe(bad)
   })
@@ -99,7 +109,7 @@ describe('wxs 内联抽取（extractInlineWxsForPipeline）', () => {
 describe('wxs 内联合并（mergeFormattedWxsInlineBlocks）', () => {
   it('babel 成功：写回格式化正文', async () => {
     const raw = 'var  x=1\nmodule.exports={x}'
-    const { source, blocks } = extractInlineWxsForPipeline(`<wxs module="m">${raw}</wxs>`)
+    const { source, blocks } = extractInlineWxs(`<wxs module="m">${raw}</wxs>`)
     expect(blocks).toHaveLength(1)
     const onWarn = vi.fn()
     const out = await mergeFormattedWxsInlineBlocks({
@@ -116,7 +126,7 @@ describe('wxs 内联合并（mergeFormattedWxsInlineBlocks）', () => {
 
   it('babel 失败：保留原文并告警，不套缩进', async () => {
     const raw = 'this is <<< not js'
-    const { source, blocks } = extractInlineWxsForPipeline(`<wxs module="m">${raw}</wxs>`)
+    const { source, blocks } = extractInlineWxs(`<wxs module="m">${raw}</wxs>`)
     const onWarn = vi.fn()
     const out = await mergeFormattedWxsInlineBlocks({
       source,
@@ -129,7 +139,7 @@ describe('wxs 内联合并（mergeFormattedWxsInlineBlocks）', () => {
   })
 
   it('占位符丢失：告警且其余仍替换', async () => {
-    const { blocks } = extractInlineWxsForPipeline('<wxs module="m">var a=1</wxs>')
+    const { blocks } = extractInlineWxs('<wxs module="m">var a=1</wxs>')
     const onWarn = vi.fn()
     const out = await mergeFormattedWxsInlineBlocks({
       source: '<wxs module="m"></wxs>',
@@ -144,7 +154,7 @@ describe('wxs 内联合并（mergeFormattedWxsInlineBlocks）', () => {
   it('源码含同名样式占位文本时：只替换真实占位符', async () => {
     const existing = '<!--__WXML_WXS_INLINE_0_0__-->'
     const src = `<view>${existing}</view><wxs module="m">var a=1</wxs>`
-    const { source, blocks } = extractInlineWxsForPipeline(src)
+    const { source, blocks } = extractInlineWxs(src)
     const onWarn = vi.fn()
     const out = await mergeFormattedWxsInlineBlocks({
       source,

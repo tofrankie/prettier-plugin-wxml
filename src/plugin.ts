@@ -2,7 +2,7 @@ import type { Options, Parser, Printer, SupportLanguage } from 'prettier'
 import type { WxmlPluginOptions } from './plugin-options'
 import type { WxmlRootAst } from './types'
 import { options as organizeAttributesOptions } from 'prettier-plugin-organize-attributes'
-import { runWxmlPipeline } from './pipeline/run-wxml-pipeline'
+import { formatWxml } from './format'
 
 const AST_FORMAT = 'wxml-ast'
 const LOG_PREFIX = '[@tofrankie/prettier-plugin-wxml]'
@@ -17,9 +17,7 @@ const wxmlParser: Parser<WxmlRootAst> = {
 const wxmlPrinter: Printer<WxmlRootAst> = {
   print(path, _options) {
     const node = path.getValue()
-    if (node.type !== 'wxml-root') {
-      return ''
-    }
+    if (node.type !== 'wxml-root') return ''
     return node.formattedSource
   },
 }
@@ -33,7 +31,6 @@ export const languages: SupportLanguage[] = [
   },
 ]
 
-/** Prettier 可注册的选项（含 `prettier-plugin-organize-attributes` 的 `attributeGroups` / `attributeSort` / `attributeIgnoreCase`）。 */
 export const options = {
   ...organizeAttributesOptions,
   wxmlOrganizeAttributes: {
@@ -48,9 +45,8 @@ export const options = {
     default: true,
     category: 'WXML',
     description:
-      'When true (default), throw on WXML parse failure or when a mustache cannot be formatted. Set false for graceful fallback.',
+      'When true (default), throw on HTML parse failure (any pipeline stage using angular-html-parser), Vue format failure, mustache collect/format failure, wxs merge/format failure, or collapse-multiline-attributes parse failure; file content is not partially written by the plugin. Set false for graceful fallback.',
   },
-
   wxmlFallbackLog: {
     type: 'boolean' as const,
     default: true,
@@ -63,7 +59,7 @@ export const options = {
     default: true,
     category: 'WXML',
     description:
-      'When true (default), run Vue template formatting and format inline <wxs> bodies (babel). When false, skip both.',
+      'When true (default), run Vue template formatting and babel-format inline <wxs> bodies. When false, still extracts wxs to placeholders and merges them back as raw text (no babel); skips Vue pass and related layout.',
   },
   wxmlSelfClose: {
     type: 'boolean' as const,
@@ -79,6 +75,13 @@ export const options = {
     default: [{ value: [] }],
     description:
       'Tag names that must not be self-closed (empty array = self-close all eligible tags). Only applies when wxmlFormat and wxmlSelfClose are enabled. Config files use string[].',
+  },
+  wxmlCollapseAttrs: {
+    type: 'boolean' as const,
+    default: true,
+    category: 'WXML',
+    description:
+      'When true (default) and wxmlFormat is enabled: after formatting {{ }}, collapse multi-line attribute values to a single line (newlines become spaces; trim inside quotes). Ignored when wxmlFormat is false.',
   },
 }
 
@@ -103,50 +106,26 @@ export type { WxmlRootAst }
  */
 async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
   const pluginOptions = options as WxmlPluginOptions
-  const strict = getStrict(pluginOptions)
-  const fallbackLog = getEffectiveFallbackLog(pluginOptions)
-  const throwOnError = strict
+  const strict = pluginOptions.wxmlStrict !== false
+  const fallbackLog = strict ? false : pluginOptions.wxmlFallbackLog !== false
   const filepath = pluginOptions.filepath
 
-  const formattedSource = await runWxmlPipeline({
+  const formattedSource = await formatWxml({
     source: text,
     prettierOptions: options,
     selfCloseEnabled: pluginOptions.wxmlFormat !== false && pluginOptions.wxmlSelfClose === true,
     selfCloseExclude: pluginOptions.wxmlSelfCloseExclude,
     formatEnabled: pluginOptions.wxmlFormat !== false,
     formatWxsEnabled: pluginOptions.wxmlFormat !== false,
+    collapseAttrsEnabled: pluginOptions.wxmlCollapseAttrs !== false,
     organizeAttributesEnabled:
       pluginOptions.wxmlOrganizeAttributes === true && pluginOptions.wxmlFormat !== false,
-    throwOnError,
+    throwOnError: strict,
     onWarn(message) {
-      if (strict) return
       if (!fallbackLog) return
-      warnPipeline(filepath, message)
+      console.warn(`${LOG_PREFIX} ${filepath ?? '<stdin>'}: ${message}`)
     },
   })
 
   return { type: 'wxml-root', source: text, formattedSource }
-}
-
-/**
- * 严格模式：遇错即抛（默认 true）。
- * @param options 插件选项（`wxmlStrict !== false` 为严格）
- */
-function getStrict(options: WxmlPluginOptions): boolean {
-  return options.wxmlStrict !== false
-}
-
-/**
- * 是否在容错回退时输出 `console.warn`（仅当非严格时有效；严格模式下恒为不输出）。
- * @param options 插件选项
- */
-function getEffectiveFallbackLog(options: WxmlPluginOptions): boolean {
-  const strict = getStrict(options)
-  if (strict) return false
-  return options.wxmlFallbackLog !== false
-}
-
-function warnPipeline(filepath: string | undefined, message: string): void {
-  const fp = filepath ?? '<stdin>'
-  console.warn(`${LOG_PREFIX} ${fp}: ${message}`)
 }

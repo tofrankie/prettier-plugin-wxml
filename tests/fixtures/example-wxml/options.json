@@ -1,5 +1,6 @@
 {
   "wxmlStrict": false,
   "wxmlFormat": true,
-  "wxmlSelfClose": false
+  "wxmlSelfClose": false,
+  "wxmlCollapseAttrs": true
 }

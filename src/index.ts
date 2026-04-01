@@ -1,4 +1,4 @@
-export { runWxmlPipeline, type RunWxmlPipelineOptions } from './pipeline/run-wxml-pipeline'
+export { formatWxml, type FormatWxmlOptions } from './format'
 
 export {
   defaultExport as default,

@@ -1,7 +1,8 @@
 import type { Ast } from 'angular-html-parser'
 import { parseHtml, RecursiveVisitor, visitAll } from 'angular-html-parser'
+import { throwIfFatalHtmlParse } from './utils/html-parse-fatal'
 
-/** 不参与 selfClose 的标签名列表，或返回该列表的函数（用于程序化 API）。 */
+/** 不参与自闭合的标签名列表，或返回该列表的函数（供程序化 API 使用）。 */
 export type WxmlSelfCloseExclude = string[] | (() => string[])
 
 interface ReplacePatch {
@@ -21,13 +22,19 @@ export function resolveSelfCloseExcludeSet(exclude: WxmlSelfCloseExclude | undef
 }
 
 /**
- * 将无子内容的成对标签改为自闭合（selfClose），如 `<view></view>` -> `<view />`。
- * 默认对符合条件的标签执行 selfClose；`excludeTags` 中的标签名不处理。
+ * 将无子内容的成对标签改为自闭合，如 `<view></view>` → `<view />`。
+ * 默认处理所有符合条件的标签；`excludeTags` 中的标签名（小写）会被跳过。
  * @param source 当前 WXML 字符串
  * @param excludeTags 不做自闭合的标签名集合（小写）
+ * @param throwOnFatalHtmlParse 为 true 时 HTML fatal 解析错误抛出 `wxml-html-parse-failed:`
  */
-export function selfCloseTags(source: string, excludeTags: Set<string>): string {
+export function selfCloseTags(
+  source: string,
+  excludeTags: Set<string>,
+  throwOnFatalHtmlParse = false
+): string {
   const result = parseHtml(source, { canSelfClose: true })
+  throwIfFatalHtmlParse(result, throwOnFatalHtmlParse)
   if (result.errors.some(e => e.level === 1)) return source
 
   const patches: ReplacePatch[] = []
@@ -87,7 +94,7 @@ function shouldSelfCloseElement(
 /**
  * 将起始标签改为自闭合：去掉 `>` 前尾随空白，再追加 ` />`。
  * 不负责换行或缩进排版；多行起始标签时 `/>` 紧跟在最后一个属性之后。
- * @param openingTag
+ * @param openingTag 元素起始标签片段（从 `<` 到 `>`，可跨多行）
  */
 function formatOpeningTagAsSelfClose(openingTag: string): string | null {
   if (openingTag.endsWith('/>')) return null
