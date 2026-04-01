@@ -1,5 +1,12 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.9 (2026-04-02)
+
+### Changed
+
+- 新增选项 `wxmlCollapseAttrs` 用于控制跨行属性值折叠。原因是 WXML 属性值换行会导致小程序编译失败。
+- 优化代码结构和可读性
+
 ## prettier-plugin-wxml@0.0.8 (2026-04-02)
 
 ### Changed
