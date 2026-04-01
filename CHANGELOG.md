@@ -1,5 +1,12 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.8 (2026-04-02)
+
+### Changed
+
+- 将 `wxmlSelfClose` 移入 `wxmlFormat` 选项范围下。仅当 `wxmlFormat` 为 `true` 时 `wxmlSelfClose` 选项才有效。
+- `wxmlSelfClose` 默认值由 `true` 改为 `false`。
+
 ## prettier-plugin-wxml@0.0.7 (2026-03-31)
 
 - 支持 WXML 元素属性排序（基于 [prettier-plugin-organize-attributes](https://github.com/NiklasPor/prettier-plugin-organize-attributes) 实现）

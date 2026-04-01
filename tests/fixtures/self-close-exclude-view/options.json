@@ -1,4 +1,5 @@
 {
+  "wxmlFormat": true,
   "wxmlSelfClose": true,
   "wxmlSelfCloseExclude": ["view"]
 }

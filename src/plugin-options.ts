@@ -19,11 +19,12 @@ export interface WxmlPluginOptions
    */
   wxmlFormat?: boolean
   /**
-   * 是否将空内容的成对标签改为自闭合（如 `<view></view>` → `<view />`），默认 `true`。
+   * 是否将空内容的成对标签改为自闭合（如 `<view></view>` → `<view />`），默认 `false`。
+   * 仅在 `wxmlFormat` 为 `true` 时生效；设为 `true` 时才会执行自闭合阶段。
    */
   wxmlSelfClose?: boolean
   /**
-   * 在 `wxmlSelfClose` 开启时，指定不做处理的标签名（小写数组）。空数组表示不排除。
+   * 在 `wxmlFormat` 与 `wxmlSelfClose` 均为开启时，指定不做处理的标签名（小写数组）。空数组表示不排除。
    * 仅在 Prettier 配置里写 `string[]`；若要在代码里动态生成列表，请使用 `resolveSelfCloseExcludeSet`。
    */
   wxmlSelfCloseExclude?: string[]

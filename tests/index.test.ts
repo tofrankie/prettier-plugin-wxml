@@ -135,7 +135,9 @@ describe('prettier-plugin-wxml', () => {
   })
 
   it('同一属性值内多个插值', async () => {
-    expect(await format('<view data="{{a}}{{b}}"></view>')).toBe('<view data="{{ a }}{{ b }}" />')
+    expect(await format('<view data="{{a}}{{b}}"></view>')).toBe(
+      '<view data="{{ a }}{{ b }}"></view>'
+    )
   })
 
   it('同一属性值内多个插值（长度 > 150）', async () => {
@@ -173,7 +175,7 @@ describe('prettier-plugin-wxml', () => {
 
   it('wx:for 数组字面量', async () => {
     expect(await format('<view wx:for="{{[1,2,3]}}"></view>')).toMatchInlineSnapshot(
-      '"<view wx:for="{{ [1, 2, 3] }}" />"'
+      '"<view wx:for="{{ [1, 2, 3] }}"></view>"'
     )
   })
 
@@ -256,12 +258,12 @@ describe('prettier-plugin-wxml', () => {
 
   it('属性外层双引号时，内层字符串保持/倾向单引号', async () => {
     const s = '<view data-str="{{ \'a\' }}"></view>'
-    expect(await format(s)).toBe('<view data-str="{{ \'a\' }}" />')
+    expect(await format(s)).toBe('<view data-str="{{ \'a\' }}"></view>')
   })
 
   it('属性外层单引号时，内层字符串优先双引号', async () => {
     const s = '<view data-str=\'{{ "a" }}\'></view>'
-    expect(await format(s)).toBe('<view data-str=\'{{ "a" }}\' />')
+    expect(await format(s)).toBe('<view data-str=\'{{ "a" }}\'></view>')
   })
 
   it('wxmlStrict：解析失败时抛出', async () => {
@@ -340,7 +342,19 @@ describe('prettier-plugin-wxml', () => {
     expect(out).toContain('data=')
   })
 
-  it('wxmlSelfClose：默认可 selfClose（含 view 与自定义组件）', async () => {
+  it('默认不对空标签做自闭合（未设置 wxmlSelfClose）', async () => {
+    const source = '<view></view><text>{{a+b}}</text>'
+    const out = await format(source)
+    expect(out).toBe('<view></view>\n<text>{{ a + b }}</text>')
+  })
+
+  it('wxmlFormat=false 时 wxmlSelfClose=true 也不执行自闭合', async () => {
+    const source = '<view></view><text>{{a+b}}</text>'
+    const out = await format(source, { wxmlFormat: false, wxmlSelfClose: true })
+    expect(out).toBe('<view></view><text>{{ a + b }}</text>')
+  })
+
+  it('wxmlSelfClose：为 true 时可 selfClose（含 view 与自定义组件）', async () => {
     const source = '<view></view><my-card></my-card><text> x </text>'
     const out = await format(source, {
       wxmlSelfClose: true,
@@ -422,7 +436,6 @@ describe('prettier-plugin-wxml', () => {
       '<view class="notice text-light">{{a?1:2}}</view><view> {{ flag ? "x" : "y" }}</view>'
     const out = await format(source, {
       wxmlFormat: true,
-      wxmlSelfClose: false,
     })
     expect(out).toContain('<view class="notice text-light">{{ a ? 1 : 2 }}</view>')
     expect(out).toContain("<view> {{ flag ? 'x' : 'y' }}</view>")
@@ -473,7 +486,7 @@ describe('prettier-plugin-wxml', () => {
       wxmlOrganizeAttributes: true,
       attributeSort: 'ASC',
     })
-    expect(out).toBe('<view class="c" id="i" />')
+    expect(out).toBe('<view class="c" id="i"></view>')
   })
 
   it('wxmlFormat=false 时 wxmlOrganizeAttributes 不生效', async () => {
@@ -483,6 +496,6 @@ describe('prettier-plugin-wxml', () => {
       wxmlOrganizeAttributes: true,
       attributeSort: 'ASC',
     })
-    expect(out).toBe('<view id="i" class="c" />')
+    expect(out).toBe('<view id="i" class="c"></view>')
   })
 })

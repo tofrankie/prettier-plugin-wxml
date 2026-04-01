@@ -22,17 +22,17 @@ importers:
         version: 1.0.0(prettier@3.8.1)
     devDependencies:
       '@tofrankie/action':
-        specifier: ^0.0.4
-        version: 0.0.4(@types/node@25.5.0)
+        specifier: ^0.0.5
+        version: 0.0.5(@types/node@25.5.0)
       '@tofrankie/eslint':
         specifier: ^0.0.17
         version: 0.0.17(@typescript-eslint/rule-tester@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/typescript-estree@8.57.2(typescript@5.9.3))(@typescript-eslint/utils@8.57.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(@vue/compiler-sfc@3.5.30)(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.2(@types/node@25.5.0)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(yaml@2.8.3)))
       '@tofrankie/prettier':
-        specifier: ^0.0.10
-        version: 0.0.10(prettier@3.8.1)
+        specifier: ^0.0.11
+        version: 0.0.11(prettier@3.8.1)
       '@tofrankie/tsconfig':
-        specifier: ^0.0.3
-        version: 0.0.3(typescript@5.9.3)
+        specifier: ^0.0.4
+        version: 0.0.4(typescript@5.9.3)
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -1184,8 +1184,8 @@ packages:
     peerDependencies:
       eslint: ^9.0.0 || ^10.0.0
 
-  '@tofrankie/action@0.0.4':
-    resolution: {integrity: sha512-isgedfNrQxfHv9jQeJYWjlVwfFJMRQX4yRBKpqzfmezoZAk/qzhce6joCXp39SiFeSVX1nHUi0NQWqByUwLvgA==}
+  '@tofrankie/action@0.0.5':
+    resolution: {integrity: sha512-UMy7Y1S4M3N8y/+s/11Ebcx+rjgSXolZTyJ9WwcT8VFHK6lWXYLzvIj41sS1lP6mifAMEphxDRarMYlDS0kq7w==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -1195,14 +1195,14 @@ packages:
     peerDependencies:
       eslint: ^9.10.0 || ^10.0.0
 
-  '@tofrankie/prettier-plugin-wxml@0.0.6':
-    resolution: {integrity: sha512-IQK5191xAAnEQJ3nme4Lbv6aTfpxT1dooGlDgM4N496RXmZaKR9B7qEIQnYrDREGMZ5oq50cGUtKey8B6bja1w==}
+  '@tofrankie/prettier-plugin-wxml@0.0.7':
+    resolution: {integrity: sha512-Onzcz3o6F0ZZWXg8MwTe3e8a7cnOEptCVJi4uUc6ALvaCn7mp031INFCad5HxMFKbc6EtVRnDVzpkx8L8TTWrQ==}
     engines: {node: '>=18'}
     peerDependencies:
       prettier: '>=3.0.0'
 
-  '@tofrankie/prettier@0.0.10':
-    resolution: {integrity: sha512-WFB36spyhxKusNQHfVNkiHUthFUCSAyWThV7R9n2zSRd+74orb+KoaLYD+6n7ZEQbzlzvnuAQonz4RQN+DwiBg==}
+  '@tofrankie/prettier@0.0.11':
+    resolution: {integrity: sha512-KbwU7Tx5pMxo6hnM6308fV3AfiycZ0Ut5DGW2T9ruUxfnyxfp+Q66SFvZgmN4235MxncVsBYtZJnV5ek/Zc3dQ==}
     engines: {node: '>=18'}
     peerDependencies:
       prettier: '>=3.0.0'
@@ -1213,8 +1213,8 @@ packages:
     peerDependencies:
       prettier: '>=3.0.0'
 
-  '@tofrankie/tsconfig@0.0.3':
-    resolution: {integrity: sha512-ute6684gC43qvL0CavG5PCphHk1xHW9zND5xTWbXtro9P+qmZBf+DWkcD/EjBwGb9alwpAXDFljx8BkZe2MhuQ==}
+  '@tofrankie/tsconfig@0.0.4':
+    resolution: {integrity: sha512-p6EN/xIAT+Pz2AYKUCFLv96oYlIzJEgqcF5Z+D+U8Vx4FQZwWzI1+Zd7JiLMb8ZmR6topfH8ZtxzBxnFmWzy3w==}
     engines: {node: ^20.0.0 || ^22.0.0 || ^24.0.0}
     peerDependencies:
       typescript: '>=5.0.0'
@@ -2577,8 +2577,8 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
   picomatch@4.0.3:
@@ -4069,7 +4069,7 @@ snapshots:
       estraverse: 5.3.0
       picomatch: 4.0.4
 
-  '@tofrankie/action@0.0.4(@types/node@25.5.0)':
+  '@tofrankie/action@0.0.5(@types/node@25.5.0)':
     dependencies:
       '@actions/core': 3.0.0
       '@actions/github': 9.0.0
@@ -4118,16 +4118,17 @@ snapshots:
       - typescript
       - vitest
 
-  '@tofrankie/prettier-plugin-wxml@0.0.6(prettier@3.8.1)':
+  '@tofrankie/prettier-plugin-wxml@0.0.7(prettier@3.8.1)':
     dependencies:
       '@babel/parser': 7.29.2
       angular-html-parser: 10.4.0
       p-limit: 7.3.0
       prettier: 3.8.1
+      prettier-plugin-organize-attributes: 1.0.0(prettier@3.8.1)
 
-  '@tofrankie/prettier@0.0.10(prettier@3.8.1)':
+  '@tofrankie/prettier@0.0.11(prettier@3.8.1)':
     dependencies:
-      '@tofrankie/prettier-plugin-wxml': 0.0.6(prettier@3.8.1)
+      '@tofrankie/prettier-plugin-wxml': 0.0.7(prettier@3.8.1)
       prettier: 3.8.1
       prettier-plugin-organize-attributes: 1.0.0(prettier@3.8.1)
 
@@ -4136,7 +4137,7 @@ snapshots:
       prettier: 3.8.1
       prettier-plugin-organize-attributes: 1.0.0(prettier@3.8.1)
 
-  '@tofrankie/tsconfig@0.0.3(typescript@5.9.3)':
+  '@tofrankie/tsconfig@0.0.4(typescript@5.9.3)':
     optionalDependencies:
       typescript: 5.9.3
 
@@ -5702,7 +5703,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   mimic-function@5.0.1: {}
 
@@ -5844,7 +5845,7 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.1: {}
+  picomatch@2.3.2: {}
 
   picomatch@4.0.3: {}
 

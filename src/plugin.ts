@@ -67,10 +67,10 @@ export const options = {
   },
   wxmlSelfClose: {
     type: 'boolean' as const,
-    default: true,
+    default: false,
     category: 'WXML',
     description:
-      'Self-close eligible tags (for example, <view></view> -> <view />). Set false to disable. Use wxmlSelfCloseExclude to opt out specific tag names.',
+      'When true, self-close eligible empty tags (for example, <view></view> -> <view />). Only applies when wxmlFormat is enabled. Use wxmlSelfCloseExclude to opt out specific tag names.',
   },
   wxmlSelfCloseExclude: {
     type: 'string' as const,
@@ -78,7 +78,7 @@ export const options = {
     category: 'WXML',
     default: [{ value: [] }],
     description:
-      'Tag names that must not be self-closed (empty array = self-close all eligible tags). Config files use string[].',
+      'Tag names that must not be self-closed (empty array = self-close all eligible tags). Only applies when wxmlFormat and wxmlSelfClose are enabled. Config files use string[].',
   },
 }
 
@@ -111,7 +111,7 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
   const formattedSource = await runWxmlPipeline({
     source: text,
     prettierOptions: options,
-    selfCloseEnabled: pluginOptions.wxmlSelfClose !== false,
+    selfCloseEnabled: pluginOptions.wxmlFormat !== false && pluginOptions.wxmlSelfClose === true,
     selfCloseExclude: pluginOptions.wxmlSelfCloseExclude,
     formatEnabled: pluginOptions.wxmlFormat !== false,
     formatWxsEnabled: pluginOptions.wxmlFormat !== false,
