@@ -1,5 +1,11 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.10 (2026-04-02)
+
+- 调整 `wxmlCollapseAttrs` 选项为 `wxmlCollapseAttrsValue`
+- 修复部分场景下缩进换行不彻底的问题
+- 更新测试用例
+
 ## prettier-plugin-wxml@0.0.9 (2026-04-02)
 
 ### Changed
