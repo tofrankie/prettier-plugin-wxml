@@ -164,6 +164,11 @@ describe('WXML 格式化流程', () => {
         expect(runCollapseAttrsValue(afterMustache)).toBe('<view style="color: {{ c }}"></view>')
       })
 
+      it('style 折叠后去掉引号内末尾分号', () => {
+        const src = '<view style="\n  color: red;\n  width: 1px;\n"></view>'
+        expect(runCollapseAttrsValue(src)).toBe('<view style="color: red; width: 1px"></view>')
+      })
+
       it('解析失败时原样返回', () => {
         const bad = '<view attr'
         expect(runCollapseAttrsValue(bad)).toBe(bad)
