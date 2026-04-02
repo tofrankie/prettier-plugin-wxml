@@ -90,9 +90,7 @@
 <!-- 列表渲染 -->
 <view>
   <view wx:for="{{ array }}"> {{ index }}: {{ item.message }} </view>
-  <view wx:for="{{ array }}" wx:for-index="idx" wx:for-item="itemName">
-    {{ idx }}: {{ itemName.message }}
-  </view>
+  <view wx:for="{{ array }}" wx:for-index="idx" wx:for-item="itemName"> {{ idx }}: {{ itemName.message }} </view>
   <view wx:for="{{ ['a', 'r', 'r', 'a', 'y'] }}">
     {{ item }}
   </view>

@@ -118,8 +118,7 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
     formatEnabled: pluginOptions.wxmlFormat !== false,
     formatWxsEnabled: pluginOptions.wxmlFormat !== false,
     collapseAttrsValueEnabled: pluginOptions.wxmlCollapseAttrsValue !== false,
-    organizeAttributesEnabled:
-      pluginOptions.wxmlOrganizeAttributes === true && pluginOptions.wxmlFormat !== false,
+    organizeAttributesEnabled: pluginOptions.wxmlOrganizeAttributes === true && pluginOptions.wxmlFormat !== false,
     throwOnError: strict,
     onWarn(message) {
       if (!fallbackLog) return

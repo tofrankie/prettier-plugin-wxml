@@ -1,5 +1,9 @@
 # Changelog
 
+## prettier-plugin-wxml@0.0.11 (2026-04-02)
+
+- 修复 style 折叠后未移除末尾分号的问题
+
 ## prettier-plugin-wxml@0.0.10 (2026-04-02)
 
 - 调整 `wxmlCollapseAttrs` 选项为 `wxmlCollapseAttrsValue`

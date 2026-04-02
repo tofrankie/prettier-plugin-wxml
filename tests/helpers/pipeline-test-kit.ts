@@ -99,10 +99,7 @@ export async function runFormatStages(args: RunFormatStagesArgs): Promise<string
  * @param options.selfCloseEnabled
  * @param options.formatEnabled
  */
-export function formatOptionsToStages(options: {
-  selfCloseEnabled: boolean
-  formatEnabled: boolean
-}): FormatStage[] {
+export function formatOptionsToStages(options: { selfCloseEnabled: boolean; formatEnabled: boolean }): FormatStage[] {
   const stages: FormatStage[] = []
   if (options.selfCloseEnabled) stages.push('selfClose')
   if (options.formatEnabled) stages.push('vueFormat')

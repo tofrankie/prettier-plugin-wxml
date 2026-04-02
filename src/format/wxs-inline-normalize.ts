@@ -10,11 +10,7 @@ import { getLineLeadingIndentAtOffset } from '../utils/line-indent'
  * @param options
  * @param throwOnFatalHtmlParse
  */
-export function normalizeWxsBlocksLayout(
-  source: string,
-  options: Options,
-  throwOnFatalHtmlParse = false
-): string {
+export function normalizeWxsBlocksLayout(source: string, options: Options, throwOnFatalHtmlParse = false): string {
   const result = parseHtml(source, { canSelfClose: true })
   throwIfFatalHtmlParse(result, throwOnFatalHtmlParse)
   if (hasFatalHtmlParseErrors(result)) {

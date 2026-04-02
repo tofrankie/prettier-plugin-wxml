@@ -28,11 +28,7 @@ export function resolveSelfCloseExcludeSet(exclude: WxmlSelfCloseExclude | undef
  * @param excludeTags 不做自闭合的标签名集合（小写）
  * @param throwOnFatalHtmlParse 为 true 时 HTML fatal 解析错误抛出 `wxml-html-parse-failed:`
  */
-export function selfCloseTags(
-  source: string,
-  excludeTags: Set<string>,
-  throwOnFatalHtmlParse = false
-): string {
+export function selfCloseTags(source: string, excludeTags: Set<string>, throwOnFatalHtmlParse = false): string {
   const result = parseHtml(source, { canSelfClose: true })
   throwIfFatalHtmlParse(result, throwOnFatalHtmlParse)
   if (result.errors.some(e => e.level === 1)) return source
@@ -73,10 +69,7 @@ class SelfCloseTagPatchCollector extends RecursiveVisitor {
   }
 }
 
-function shouldSelfCloseElement(
-  ast: Extract<Ast.Node, { kind: 'element' }>,
-  excludeTags: Set<string>
-): boolean {
+function shouldSelfCloseElement(ast: Extract<Ast.Node, { kind: 'element' }>, excludeTags: Set<string>): boolean {
   if (ast.isSelfClosing || ast.endSourceSpan === null || ast.isVoid) return false
   if (excludeTags.has(ast.name.toLowerCase())) return false
 

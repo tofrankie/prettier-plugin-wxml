@@ -7,11 +7,7 @@ import { runMustache } from '../src/format/mustache'
 import { buildVueFormatOptions, runVueFormat } from '../src/format/vue-format'
 import { extractInlineWxs } from '../src/format/wxs-inline'
 import { selfCloseTags } from '../src/self-close-tags'
-import {
-  formatOptionsToStages,
-  runFormatStages,
-  runFullWxmlFormat,
-} from './helpers/pipeline-test-kit'
+import { formatOptionsToStages, runFormatStages, runFullWxmlFormat } from './helpers/pipeline-test-kit'
 
 const base = baseOptions as Options
 
@@ -19,9 +15,7 @@ describe('WXML 格式化流程', () => {
   describe('单阶段', () => {
     describe('extractInlineWxs', () => {
       it('HTML fatal 且 throwOnFatalHtmlParse=true 时抛出', () => {
-        expect(() => extractInlineWxs('<view attr', { throwOnFatalHtmlParse: true })).toThrow(
-          /wxml-html-parse-failed/
-        )
+        expect(() => extractInlineWxs('<view attr', { throwOnFatalHtmlParse: true })).toThrow(/wxml-html-parse-failed/)
       })
 
       it('extract 容错后 selfClose 严格仍会因 HTML fatal 抛错', () => {

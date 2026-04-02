@@ -57,10 +57,7 @@ export function extractInlineWxs(
   let out = source
   const sorted = [...ranges].sort((a, b) => b.innerStart - a.innerStart)
   for (const r of sorted) {
-    out =
-      out.slice(0, r.innerStart) +
-      buildWxsPlaceholder(r.id, placeholderSalt) +
-      out.slice(r.innerEnd)
+    out = out.slice(0, r.innerStart) + buildWxsPlaceholder(r.id, placeholderSalt) + out.slice(r.innerEnd)
   }
   return { source: out, blocks }
 }

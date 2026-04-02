@@ -2,11 +2,7 @@ import type { Options } from 'prettier'
 import type { WxsInlineBlock } from './wxs-inline-extract'
 import pLimit from 'p-limit'
 import * as prettier from 'prettier'
-import {
-  ensureTrailingNewline,
-  normalizeWxsBlocksLayout,
-  preserveEofNewline,
-} from './wxs-inline-normalize'
+import { ensureTrailingNewline, normalizeWxsBlocksLayout, preserveEofNewline } from './wxs-inline-normalize'
 
 const WXS_INLINE_FORMAT_CONCURRENCY = 4
 
@@ -33,9 +29,7 @@ export async function mergeFormattedWxsInlineBlocks(args: {
   const formatWxs = args.formatWxsEnabled !== false
 
   if (blocks.length === 0) {
-    const result = formatWxs
-      ? normalizeWxsBlocksLayout(source, prettierOptions, throwOnErr)
-      : source
+    const result = formatWxs ? normalizeWxsBlocksLayout(source, prettierOptions, throwOnErr) : source
     return preserveEofNewline(source, result)
   }
 

@@ -3,11 +3,7 @@ import baseOptions from '@tofrankie/prettier'
 import * as prettier from 'prettier'
 import { describe, expect, it, vi } from 'vitest'
 import { collectMustacheRegions } from '../src/format/collect-mustache'
-import {
-  extractInlineWxs,
-  mergeFormattedWxsInlineBlocks,
-  normalizeWxsBlocksLayout,
-} from '../src/format/wxs-inline'
+import { extractInlineWxs, mergeFormattedWxsInlineBlocks, normalizeWxsBlocksLayout } from '../src/format/wxs-inline'
 import plugin from '../src/index'
 
 const base = baseOptions as Options
@@ -162,9 +158,7 @@ describe('wxs 内联合并（mergeFormattedWxsInlineBlocks）', () => {
       prettierOptions: base,
       onWarn,
     })
-    expect(onWarn).not.toHaveBeenCalledWith(
-      expect.stringContaining('wxs-inline-placeholder-missing')
-    )
+    expect(onWarn).not.toHaveBeenCalledWith(expect.stringContaining('wxs-inline-placeholder-missing'))
     expect(out).toContain(existing)
     expect(out).toContain('var a = 1')
   })
@@ -215,9 +209,7 @@ describe('wxs 端到端（Prettier wxml）', () => {
     expect(out).toContain('{{ tools.msg }}')
     expect(out).toMatch(/var x = 1/)
     expect(out).toContain('module.exports')
-    expect(out).toMatch(
-      /<wxs module="m">\n {2}var x = 1\n {2}module\.exports = \{ x(: x)? \}\n<\/wxs>/
-    )
+    expect(out).toMatch(/<wxs module="m">\n {2}var x = 1\n {2}module\.exports = \{ x(: x)? \}\n<\/wxs>/)
   })
 
   it('内联 wxs 与 view 混排：连续格式化幂等', async () => {

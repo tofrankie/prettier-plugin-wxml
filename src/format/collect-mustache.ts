@@ -58,11 +58,7 @@ class MustacheRegionCollector extends RecursiveVisitor {
     super.visitAttribute(ast, context)
   }
 
-  private pushSpan(
-    span: ParseSourceSpan,
-    preferredInnerSingleQuote?: boolean,
-    fromAttribute = false
-  ): void {
+  private pushSpan(span: ParseSourceSpan, preferredInnerSingleQuote?: boolean, fromAttribute = false): void {
     const start = span.start.offset
     const end = span.end.offset
     const slice = this.source.slice(start, end)
@@ -96,10 +92,7 @@ class MustacheRegionCollector extends RecursiveVisitor {
   }
 }
 
-function collectIgnoreRangesInSiblings(
-  nodes: Ast.Node[],
-  ranges: Array<{ start: number; end: number }>
-): void {
+function collectIgnoreRangesInSiblings(nodes: Ast.Node[], ranges: Array<{ start: number; end: number }>): void {
   for (let i = 0; i < nodes.length; i += 1) {
     const node = nodes[i]
     if (isPrettierIgnoreComment(node)) {
@@ -140,10 +133,6 @@ function hasChildren(node: Ast.Node): node is Ast.Node & { children: Ast.Node[] 
   return 'children' in node && Array.isArray((node as { children?: unknown }).children)
 }
 
-function isInIgnoredRange(
-  start: number,
-  end: number,
-  ignoreRanges: Array<{ start: number; end: number }>
-): boolean {
+function isInIgnoredRange(start: number, end: number, ignoreRanges: Array<{ start: number; end: number }>): boolean {
   return ignoreRanges.some(r => start >= r.start && end <= r.end)
 }
