@@ -76,7 +76,7 @@ export const options = {
     description:
       'Tag names that must not be self-closed (empty array = self-close all eligible tags). Only applies when wxmlFormat and wxmlSelfClose are enabled. Config files use string[].',
   },
-  wxmlCollapseAttrs: {
+  wxmlCollapseAttrsValue: {
     type: 'boolean' as const,
     default: true,
     category: 'WXML',
@@ -117,7 +117,7 @@ async function buildAst(text: string, options: Options): Promise<WxmlRootAst> {
     selfCloseExclude: pluginOptions.wxmlSelfCloseExclude,
     formatEnabled: pluginOptions.wxmlFormat !== false,
     formatWxsEnabled: pluginOptions.wxmlFormat !== false,
-    collapseAttrsEnabled: pluginOptions.wxmlCollapseAttrs !== false,
+    collapseAttrsValueEnabled: pluginOptions.wxmlCollapseAttrsValue !== false,
     organizeAttributesEnabled:
       pluginOptions.wxmlOrganizeAttributes === true && pluginOptions.wxmlFormat !== false,
     throwOnError: strict,

@@ -2,7 +2,7 @@ import type { Options } from 'prettier'
 import baseOptions from '@tofrankie/prettier'
 import * as prettier from 'prettier'
 import { describe, expect, it, vi } from 'vitest'
-import { runCollapseAttrs } from '../src/format/collapse-attrs'
+import { runCollapseAttrsValue } from '../src/format/collapse-attrs-value'
 import { runMustache } from '../src/format/mustache'
 import { buildVueFormatOptions, runVueFormat } from '../src/format/vue-format'
 import { extractInlineWxs } from '../src/format/wxs-inline'
@@ -143,15 +143,15 @@ describe('WXML 格式化流程', () => {
       })
     })
 
-    describe('collapseAttrs', () => {
+    describe('collapseAttrsValue', () => {
       it('任意属性名：跨行双引号值折叠并 trim 首尾空白', () => {
         const src = '<view foo="\n  bar\n  baz\n"></view>'
-        expect(runCollapseAttrs(src)).toBe('<view foo="bar baz"></view>')
+        expect(runCollapseAttrsValue(src)).toBe('<view foo="bar baz"></view>')
       })
 
       it('单引号同理', () => {
         const src = "<view x='\n  a\n'></view>"
-        expect(runCollapseAttrs(src)).toBe("<view x='a'></view>")
+        expect(runCollapseAttrsValue(src)).toBe("<view x='a'></view>")
       })
 
       it('style 内含 {{}} 不破坏插值', async () => {
@@ -161,17 +161,17 @@ describe('WXML 格式化流程', () => {
           throwOnError: false,
           onWarn: () => {},
         })
-        expect(runCollapseAttrs(afterMustache)).toBe('<view style="color: {{ c }}"></view>')
+        expect(runCollapseAttrsValue(afterMustache)).toBe('<view style="color: {{ c }}"></view>')
       })
 
       it('解析失败时原样返回', () => {
         const bad = '<view attr'
-        expect(runCollapseAttrs(bad)).toBe(bad)
+        expect(runCollapseAttrsValue(bad)).toBe(bad)
       })
 
       it('解析失败且 throwOnFatalHtmlParse=true 时抛出', () => {
         const bad = '<view attr'
-        expect(() => runCollapseAttrs(bad, true)).toThrow(/wxml-html-parse-failed/)
+        expect(() => runCollapseAttrsValue(bad, true)).toThrow(/wxml-html-parse-failed/)
       })
     })
   })
@@ -199,7 +199,7 @@ describe('WXML 格式化流程', () => {
         source: src,
         stages: ['vueFormat', 'mustache'],
         prettierOptions: base,
-        collapseAttrsEnabled: false,
+        collapseAttrsValueEnabled: false,
       })
       expect(raw).toMatch(/\n\s*a/)
     })

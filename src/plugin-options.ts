@@ -18,7 +18,7 @@ export interface WxmlPluginOptions
    *
    * 流水线**始终**先将符合条件的内联 `<wxs>` 正文换成占位符、**最后**再写回（不因本项为 `false` 而跳过）：本项为 `true` 时写回 Babel 格式化后的 JS 并可做 `<wxs>` 布局规范化；为 `false` 时写回抽取时缓存的**原文**（不跑 Babel / `normalizeWxsBlocksLayout`）。能否成功抽取仍取决于全文是否能被 HTML 解析器解析。
    *
-   * 为 `false` 时还会跳过：Vue 整段排版、跨行属性折叠（见 `wxmlCollapseAttrs`）、依赖 `wxmlFormat` 的自闭合与属性排序等。`{{ }}` 插值仍会尝试格式化（依赖 HTML 解析；解析失败时严格模式抛错，非严格模式告警并跳过插值处理）。
+   * 为 `false` 时还会跳过：Vue 整段排版、跨行属性折叠（见 `wxmlCollapseAttrsValue`）、依赖 `wxmlFormat` 的自闭合与属性排序等。`{{ }}` 插值仍会尝试格式化（依赖 HTML 解析；解析失败时严格模式抛错，非严格模式告警并跳过插值处理）。
    */
   wxmlFormat?: boolean
   /**
@@ -36,7 +36,7 @@ export interface WxmlPluginOptions
    * 通常 WXML 里元素属性值不应包含换行，否则可能会导致编译失败。
    * 仅在 `wxmlFormat` 为 `true` 时生效。
    */
-  wxmlCollapseAttrs?: boolean
+  wxmlCollapseAttrsValue?: boolean
   /**
    * 在 `wxmlFormat` 开启时，使用 `prettier-plugin-organize-attributes` 对属性进行排序。
    * 默认 `false`。与 `attributeGroups`、`attributeSort`、`attributeIgnoreCase` 配合使用，详见 {@link https://github.com/NiklasPor/prettier-plugin-organize-attributes | prettier-plugin-organize-attributes}。

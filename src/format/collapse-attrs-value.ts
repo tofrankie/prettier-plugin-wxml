@@ -11,7 +11,7 @@ const NEWLINE_SURROUNDING_WS = /\s*(?:\r\n|\r|\n)\s*/g
  * @param source 当前流水线字符串
  * @param throwOnFatalHtmlParse 为 true 时 HTML fatal 解析错误抛出 `wxml-html-parse-failed:`
  */
-export function runCollapseAttrs(source: string, throwOnFatalHtmlParse = false): string {
+export function runCollapseAttrsValue(source: string, throwOnFatalHtmlParse = false): string {
   const result = parseHtml(source, { canSelfClose: true })
   throwIfFatalHtmlParse(result, throwOnFatalHtmlParse)
   if (hasFatalHtmlParseErrors(result)) {

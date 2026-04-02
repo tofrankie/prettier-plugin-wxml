@@ -1,5 +1,5 @@
 import type { Options } from 'prettier'
-import { runCollapseAttrs } from './collapse-attrs'
+import { runCollapseAttrsValue } from './collapse-attrs-value'
 import { runMustache } from './mustache'
 import { runSelfClose } from './self-close'
 import { runVueFormat } from './vue-format'
@@ -12,7 +12,7 @@ import { extractInlineWxs, mergeFormattedWxsInlineBlocks } from './wxs-inline'
  * 1. 可选：自闭合空标签（`selfCloseEnabled`）
  * 2. 可选：Vue 模板排版（`formatEnabled`）
  * 3. 必选：`{{ }}` 插值格式化
- * 4. 可选：将跨行属性值折叠为单行（`formatEnabled` 与 `collapseAttrsEnabled` 均为真时）
+ * 4. 可选：将跨行属性值折叠为单行（`formatEnabled` 与 `collapseAttrsValueEnabled` 均为真时）
  * 5. 将占位符还原为 wxs 正文；`formatWxsEnabled` 为真时用 Babel 格式化内联 JS
  *
  * 各阶段基于当前字符串重新计算偏移，禁止复用上游下标。
@@ -46,7 +46,7 @@ export interface FormatWxmlOptions {
   /** 是否在步骤 2 中加载 `prettier-plugin-organize-attributes`；插件中为 `wxmlOrganizeAttributes && wxmlFormat` */
   organizeAttributesEnabled?: boolean
   /** 是否在步骤 4 折叠跨行属性值；插件默认 `true`，且仅在 `formatEnabled` 时生效 */
-  collapseAttrsEnabled?: boolean
+  collapseAttrsValueEnabled?: boolean
   /** 为 `true` 时遇错抛出；为 `false` 时走 `onWarn` 并回退，对应 `wxmlStrict !== false` 的反面 */
   throwOnError: boolean
   /** `throwOnError === false` 时的告警回调（如 `expression-format-failed:`、`wxs-inline-format-failed` 等前缀） */
@@ -68,7 +68,7 @@ export async function formatWxml(options: FormatWxmlOptions): Promise<string> {
     formatEnabled,
     formatWxsEnabled,
     organizeAttributesEnabled = false,
-    collapseAttrsEnabled = true,
+    collapseAttrsValueEnabled = true,
     throwOnError,
     prettierOptions,
     onWarn,
@@ -101,8 +101,8 @@ export async function formatWxml(options: FormatWxmlOptions): Promise<string> {
     onWarn,
   })
 
-  if (formatEnabled && collapseAttrsEnabled) {
-    out = runCollapseAttrs(out, throwOnError)
+  if (formatEnabled && collapseAttrsValueEnabled) {
+    out = runCollapseAttrsValue(out, throwOnError)
   }
 
   return mergeFormattedWxsInlineBlocks({

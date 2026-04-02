@@ -1,0 +1,11 @@
+<text>{{ cond ? a : b }}</text>
+
+<!-- 不合法的表达式保持原样输出 -->
+<text>{{foo+}}</text>
+<view data-bad="{{foo+}}"></view>
+
+<!-- 语句类保持原样输出 -->
+<text>{{ if(a) b }}</text>
+<!-- <text>{{ return a }}</text> -->
+<view data-stmt-if="{{ if(a) b }}"></view>
+<view data-stmt-ret="{{ return a }}"></view>

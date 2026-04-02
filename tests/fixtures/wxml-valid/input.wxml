@@ -43,9 +43,10 @@
     <!-- 长属性值，属性值不允许换行 -->
     <view data-long="prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-{{firstValue+1}}-MID-{{secondValue&&thirdValue}}-TAIL-{{ user.profile?.nickname }}-suffix-END"></view>
     <view style="
-      background: url('https://placehold.co/600x400/000000/FFFFFF/png?text=Hello+World+%23123456')
+      background: url('https://placehold.co/600x400/000000/FFFFFF/png?text=Hello+World+123456+1234567890+12345678901234567890+abcdefghijklmnopqrstuvwxyz+ABCDEFGHIJKLMNOPQRSTUVWXYZ')
         center center no-repeat;
       background-size: 100% 100%;"></view>
+    <view id="long-attr-value" style="background: url('https://placehold.co/600x400/000000/FFFFFF/png?text=Hello+World+0123456+1234567890+12345678901234567890+abcdefghijklmnopqrstuvwxyz+ABCDEFGHIJKLMNOPQRSTUVWXYZ') center center no-repeat; background-size: 100% 100%;" data-id="test"></view>
 
     <!-- 多个空格 -->
     <text>{{   a+b   }}</text>
@@ -66,16 +67,6 @@
     <text>{{ user.name }}</text>
     <view data-stable="{{ user.name }}"></view>
 
-    <!-- 不合法的表达式保持原样输出 -->
-    <text>{{foo+}}</text>
-    <view data-bad="{{foo+}}"></view>
-
-    <!-- 语句类保持原样输出 -->
-    <text>{{ if (a) b }}</text>
-    <text>{{ return a }}</text>
-    <view data-stmt-if="{{ if (a) b }}"></view>
-    <view data-stmt-ret="{{ return a }}"></view>
-
     <!-- 属性插值 `{{}}` 外层含空格 https://developers.weixin.qq.com/miniprogram/dev/reference/wxml/data.html#对象 -->
     <view wx:for="{{[1,2,3]}} " wx:key="*this"></view>
     <view wx:for=" {{[1,2,3]}}" wx:key="*this"></view>
@@ -88,7 +79,7 @@
     <custom-component custom-props hidden="{{!flag}}"></custom-component>
 
     <!-- TODO: 转义引号问题 -->
-  <view>
+  </view>
 </view>
 
 <!-- 列表渲染 -->

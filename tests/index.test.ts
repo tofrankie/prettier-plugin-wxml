@@ -20,7 +20,7 @@ type FormatOptions = Pick<
   | 'wxmlFormat'
   | 'wxmlSelfClose'
   | 'wxmlSelfCloseExclude'
-  | 'wxmlCollapseAttrs'
+  | 'wxmlCollapseAttrsValue'
   | 'wxmlOrganizeAttributes'
   | 'attributeSort'
   | 'attributeGroups'
@@ -60,7 +60,9 @@ async function formatRaw(source: string, opts: FormatOptions = {}) {
     ...(opts.wxmlSelfCloseExclude !== undefined
       ? { wxmlSelfCloseExclude: opts.wxmlSelfCloseExclude }
       : {}),
-    ...(opts.wxmlCollapseAttrs !== undefined ? { wxmlCollapseAttrs: opts.wxmlCollapseAttrs } : {}),
+    ...(opts.wxmlCollapseAttrsValue !== undefined
+      ? { wxmlCollapseAttrsValue: opts.wxmlCollapseAttrsValue }
+      : {}),
     ...(opts.wxmlOrganizeAttributes !== undefined
       ? { wxmlOrganizeAttributes: opts.wxmlOrganizeAttributes }
       : {}),
@@ -114,7 +116,7 @@ describe('prettier-plugin-wxml', () => {
     expect(twice).toBe(once)
   })
 
-  it('wxmlCollapseAttrs 仅在 wxmlFormat 为 true 时生效', async () => {
+  it('wxmlCollapseAttrsValue 仅在 wxmlFormat 为 true 时生效', async () => {
     const src = '<view style="\n  color: red;\n"></view>'
     expect(await format(src, { wxmlFormat: false })).toMatch(/\n\s*color: red/)
     expect(await format(src)).toBe('<view style="color: red"></view>')

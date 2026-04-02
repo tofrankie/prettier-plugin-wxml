@@ -1,15 +1,15 @@
 import type { Options } from 'prettier'
 import type { FormatWxmlOptions } from '../../src/format'
 import { formatWxml } from '../../src/format'
-import { runCollapseAttrs } from '../../src/format/collapse-attrs'
+import { runCollapseAttrsValue } from '../../src/format/collapse-attrs-value'
 import { runMustache } from '../../src/format/mustache'
 import { runSelfClose } from '../../src/format/self-close'
 import { runVueFormat } from '../../src/format/vue-format'
 import { extractInlineWxs, mergeFormattedWxsInlineBlocks } from '../../src/format/wxs-inline'
 
 /**
- * 格式化阶段（顺序固定为 wxs 抽取 → selfClose → vueFormat → mustache → collapseAttrs → wxs 合并）。
- * 折叠在 `mustache` 之后，且 **仅当 stages 含 `vueFormat`** 时执行（与 `wxmlFormat` / `formatEnabled` 一致）。
+ * 格式化阶段（顺序固定为 wxs 抽取 → selfClose → vueFormat → mustache → collapseAttrsValue → wxs 合并）。
+ * 折叠在 `mustache` 之后执行；**仅当 stages 含 `vueFormat`** 时生效。
  */
 export const FORMAT_STAGE_ORDER = ['selfClose', 'vueFormat', 'mustache'] as const
 export type FormatStage = (typeof FORMAT_STAGE_ORDER)[number]
@@ -28,8 +28,8 @@ export interface RunFormatStagesArgs {
   onWarn?: (msg: string) => void
   /** 与生产流水线中 `wxmlFormat` 一致；默认 true。为 false 时不抽取/合并内联 wxs。 */
   formatWxsEnabled?: boolean
-  /** 与 `wxmlCollapseAttrs` 一致；默认 true。仅当同时包含 `vueFormat` 与 `mustache` 时在 mustache 之后执行。 */
-  collapseAttrsEnabled?: boolean
+  /** 与 `wxmlCollapseAttrsValue` 一致；默认 true。仅当同时包含 `vueFormat` 与 `mustache` 时在 mustache 之后执行。 */
+  collapseAttrsValueEnabled?: boolean
   /** 与 `wxmlOrganizeAttributes` 一致；默认 false。 */
   organizeAttributesEnabled?: boolean
 }
@@ -49,7 +49,7 @@ export async function runFormatStages(args: RunFormatStagesArgs): Promise<string
     throwOnError = false,
     onWarn = noopWarn,
     formatWxsEnabled = true,
-    collapseAttrsEnabled = true,
+    collapseAttrsValueEnabled = true,
     organizeAttributesEnabled = false,
   } = args
 
@@ -78,8 +78,8 @@ export async function runFormatStages(args: RunFormatStagesArgs): Promise<string
       throwOnError,
       onWarn,
     })
-    if (want.has('vueFormat') && collapseAttrsEnabled) {
-      current = runCollapseAttrs(current, throwOnError)
+    if (want.has('vueFormat') && collapseAttrsValueEnabled) {
+      current = runCollapseAttrsValue(current, throwOnError)
     }
   }
 
