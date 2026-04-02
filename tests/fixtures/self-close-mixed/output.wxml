@@ -20,5 +20,6 @@
     bindload="imageLoad"
     bindtouchend="_end"
     bindtouchmove="_move"
-    bindtouchstart="_start" />
+    bindtouchstart="_start"
+  />
 </view>

@@ -12,7 +12,9 @@ export function buildVueFormatOptions(prettierOptions: Options, organizeEnabled 
 }
 
 /**
- * Vue parser 整文件排版（含 `<template>` 包裹回退路径）。
+ * Vue parser 整文件排版
+ * 始终用 `<template>` 包裹再 `prettier.format`
+ * 裸 WXML 片段若直接 `parser: 'vue'` 会误报嵌套闭合标签，包一层后与真实 `.vue` 模板一致。
  * @param args
  * @param args.source 当前流水线字符串（占位符已替换后的 WXML）
  * @param args.prettierOptions 当前 Prettier 选项
@@ -46,13 +48,9 @@ async function formatWithVueParser(
   organizeEnabled: boolean
 ): Promise<string> {
   const formatOpts = buildVueFormatOptions(prettierOptions, organizeEnabled)
-  try {
-    return await prettier.format(source, formatOpts)
-  } catch {
-    const wrapped = `<template>\n${source}\n</template>`
-    const wrappedFormatted = await prettier.format(wrapped, formatOpts)
-    return unwrapTemplateContent(wrappedFormatted, prettierOptions)
-  }
+  const wrapped = `<template>\n${source}\n</template>`
+  const formatted = await prettier.format(wrapped, formatOpts)
+  return unwrapTemplateContent(formatted, prettierOptions)
 }
 
 function unwrapTemplateContent(wrappedSource: string, prettierOptions: Options): string {

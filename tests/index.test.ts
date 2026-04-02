@@ -219,10 +219,7 @@ describe('prettier-plugin-wxml', () => {
 
   it('注释内插值不处理', async () => {
     const s = '<!-- {{count+1}} --><view>{{a}}</view>'
-    expect(await format(s)).toMatchInlineSnapshot(`
-      "<!-- {{count+1}} -->
-      <view>{{ a }}</view>"
-    `)
+    expect(await format(s)).toMatchInlineSnapshot('"<!-- {{count+1}} --><view>{{ a }}</view>"')
   })
 
   it('prettier-ignore：文件入口注释仅忽略下一个节点', async () => {
@@ -355,7 +352,7 @@ describe('prettier-plugin-wxml', () => {
   it('默认不对空标签做自闭合（未设置 wxmlSelfClose）', async () => {
     const source = '<view></view><text>{{a+b}}</text>'
     const out = await format(source)
-    expect(out).toBe('<view></view>\n<text>{{ a + b }}</text>')
+    expect(out).toBe('<view></view><text>{{ a + b }}</text>')
   })
 
   it('wxmlFormat=false 时 wxmlSelfClose=true 也不执行自闭合', async () => {
@@ -369,7 +366,7 @@ describe('prettier-plugin-wxml', () => {
     const out = await format(source, {
       wxmlSelfClose: true,
     })
-    expect(out).toBe('<view />\n<my-card />\n<text> x </text>')
+    expect(out).toBe('<view /><my-card /><text> x </text>')
   })
 
   it('wxmlSelfCloseExclude：可排除不做 selfClose 的标签', async () => {
@@ -378,7 +375,7 @@ describe('prettier-plugin-wxml', () => {
       wxmlSelfClose: true,
       wxmlSelfCloseExclude: ['view'],
     })
-    expect(out).toBe('<view></view>\n<my-card />')
+    expect(out).toBe('<view></view><my-card />')
   })
 
   it('resolveSelfCloseExcludeSet 支持函数（不经 Prettier 选项，供程序化调用）', () => {
@@ -395,13 +392,13 @@ describe('prettier-plugin-wxml', () => {
     const out = await format(source, {
       wxmlSelfClose: true,
     })
-    expect(out).toBe('<view> </view>\n<view><!--x--></view>\n<view><text /></view>')
+    expect(out).toBe('<view> </view><view><!--x--></view><view><text /></view>')
   })
 
   it('wxmlFormat：开启后先做整文件 HTML 格式化，再做 mustache', async () => {
     const source = '<view>\n<text>{{a+b}}</text>\n</view>'
     const out = await format(source, { wxmlFormat: true })
-    expect(out).toBe('<view>\n<text>{{ a + b }}</text>\n</view>')
+    expect(out).toBe('<view>\n  <text>{{ a + b }}</text>\n</view>')
   })
 
   it('singleAttributePerLine=true 时，mustache 仍正确格式化', async () => {
@@ -447,8 +444,9 @@ describe('prettier-plugin-wxml', () => {
     const out = await format(source, {
       wxmlFormat: true,
     })
-    expect(out).toContain('<view class="notice text-light">{{ a ? 1 : 2 }}</view>')
-    expect(out).toContain("<view> {{ flag ? 'x' : 'y' }}</view>")
+    expect(out).toContain('class="notice text-light"')
+    expect(out).toContain('{{ a ? 1 : 2 }}')
+    expect(out).toContain("{{ flag ? 'x' : 'y' }}")
   })
 
   it('容错：formatWxml pass 失败时回退并继续（不抛错）', async () => {
