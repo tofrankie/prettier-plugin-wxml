@@ -11,9 +11,9 @@
 
 - 对 WXML 插值表达式进行格式化
 - 对 WXML 文件进行格式化
-  - 支持缩进换行
+  - 支持缩进换行（Vue 风格）
   - 支持内联 WXS 格式化
-  - 支持对空内容元素自闭合（默认关闭）
+  - 支持对无任何子节点的元素[自闭合](https://developer.mozilla.org/zh-CN/docs/Glossary/Void_element#自闭合标签)处理（默认关闭）
   - 支持元素属性排序（默认关闭）
 
 <!-- prettier-ignore-start -->
@@ -113,7 +113,7 @@ module.exports = {
 | `wxmlStrict`             | `boolean`                    | `true`   | 采用严格模式，遇到无法解析或无法安全格式化的内容会抛出错误。为 `false` 时尽量保留原文继续处理。                                                                           |
 | `wxmlFallbackLog`        | `boolean`                    | `true`   | 遇到无法解析或无法安全格式化的内容会输出提示，但不抛出错误。仅当 `wxmlStrict` 为 `false` 时有效。                                                                         |
 | `wxmlFormat`             | `boolean`                    | `true`   | 对 WXML 文件整体格式化，并按 JavaScript 的方式格式化内联 `<wxs>` 内容。                                                                                                   |
-| `wxmlSelfClose`          | `boolean`                    | `false`  | 对空内容元素标签进行自闭合处理。仅当 `wxmlFormat` 为 `true` 时有效。                                                                                                      |
+| `wxmlSelfClose`          | `boolean`                    | `false`  | 对无任何子节点的元素进行[自闭合](https://developer.mozilla.org/zh-CN/docs/Glossary/Void_element#自闭合标签)处理。仅当 `wxmlFormat` 为 `true` 时有效。                     |
 | `wxmlSelfCloseExclude`   | `string[] \| () => string[]` | `[]`     | 指定不做自闭合处理的标签名数组（小写形式）。空数组表示不排除任何标签。仅在 `wxmlFormat` 与 `wxmlSelfClose` 均为 `true` 时有效。                                           |
 | `wxmlOrganizeAttributes` | `boolean`                    | `false`  | 启用内置的 [`prettier-plugin-organize-attributes`](https://github.com/NiklasPor/prettier-plugin-organize-attributes) 对属性进行排序。仅在 `wxmlFormat` 为 `true` 时生效。 |
 | `attributeGroups`        | `string[]`                   | 上游默认 | [详见](https://github.com/NiklasPor/prettier-plugin-organize-attributes#groups)                                                                                           |
@@ -211,6 +211,28 @@ WXML 支持属性写成 `wx:for="{{[1,2,3]}} "`（[详见](https://developers.we
 <view data="{{ 'foo' }}"></view>
 <view data='{{ "foo" }}'></view>
 ```
+
+### Void elements do not have end tags "input"
+
+对标准 HTML 来说，`<input>` 等[空元素](https://developer.mozilla.org/zh-CN/docs/Glossary/Void_element) 是**不应**有结束标签的，也不存在自闭合标签 `<tag />`。
+
+原因：若按 bad 方式编写 input 标签，Prettier 会抛出语法错误，且无法自动修复。
+解决方法：手动修正为 `<input type="file" >` 或 `<input type="file" />`。
+
+<!-- prettier-ignore-start -->
+```html
+<!-- bad -->
+<input type="file"></input>
+```
+
+```html
+<!-- good -->
+<input type="file" >
+<input type="file" />
+```
+<!-- prettier-ignore-end -->
+
+> 本扩展会将 `<input type="file" >` 格式化为 `<input type="file" />` 形式，与 Vue 风格一致。
 
 ## 🎉 致谢
 
