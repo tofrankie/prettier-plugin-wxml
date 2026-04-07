@@ -21,7 +21,7 @@ export interface WxmlPluginOptions extends Options, Partial<PrettierPluginOrgani
    */
   wxmlFormat?: boolean
   /**
-   * 是否将空内容的成对标签改为自闭合（如 `<view></view>` → `<view />`），默认 `false`。
+   * 是否将无任何子节点的成对标签改为自闭合（如 `<view></view>` → `<view />`），默认 `false`。
    * 仅在 `wxmlFormat` 为 `true` 时生效；设为 `true` 时才会执行自闭合阶段。
    */
   wxmlSelfClose?: boolean

@@ -71,12 +71,12 @@
     "prettier-plugin-organize-attributes": "^1.0.0"
   },
   "devDependencies": {
-    "@tofrankie/action": "^0.0.5",
-    "@tofrankie/eslint": "^0.0.17",
-    "@tofrankie/prettier": "^0.0.14",
-    "@tofrankie/tsconfig": "^0.0.4",
-    "@types/node": "^25.5.0",
-    "eslint": "^9.39.4",
+    "@tofrankie/action": "^0.0.6",
+    "@tofrankie/eslint": "^0.0.21",
+    "@tofrankie/prettier": "^0.0.17",
+    "@tofrankie/tsconfig": "^0.0.5",
+    "@types/node": "^25.5.2",
+    "eslint": "^10.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "npm-run-all2": "^8.0.4",
