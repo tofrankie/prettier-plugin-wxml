@@ -45,7 +45,8 @@ export async function runMustache(args: {
     limit(async () => {
       const inner = source.slice(region.start + 2, region.end - 2)
       const quotePreference = region.fromAttribute
-        ? (region.preferredInnerSingleQuote ?? inferQuoteByNeighbors(source, region.start, region.end))
+        ? (region.preferredInnerSingleQuote ??
+          inferQuoteByNeighbors(source, region.start, region.end))
         : undefined
 
       const overrideOptions: Partial<Options> = {
@@ -56,7 +57,12 @@ export async function runMustache(args: {
       }
 
       try {
-        const formatted = await formatMustacheInner(inner, prettierOptions, throwOnError, overrideOptions)
+        const formatted = await formatMustacheInner(
+          inner,
+          prettierOptions,
+          throwOnError,
+          overrideOptions
+        )
         return { region, inner, formatted, errorDetail: null as string | null }
       } catch (err) {
         const errorDetail = buildErrorDetail(source, region, inner, err)
@@ -89,7 +95,12 @@ export async function runMustache(args: {
   return out
 }
 
-function buildReplacement(source: string, region: MustacheRegion, formatted: string, options: Options): string {
+function buildReplacement(
+  source: string,
+  region: MustacheRegion,
+  formatted: string,
+  options: Options
+): string {
   if (!formatted.includes('\n')) {
     return `{{ ${formatted} }}`
   }
@@ -103,7 +114,12 @@ function buildReplacement(source: string, region: MustacheRegion, formatted: str
   return `{{\n${body}\n${lineIndent}}}`
 }
 
-function buildErrorDetail(source: string, region: MustacheRegion, inner: string, err: unknown): string {
+function buildErrorDetail(
+  source: string,
+  region: MustacheRegion,
+  inner: string,
+  err: unknown
+): string {
   const abs = region.start + 2
   const loc = offsetToLineCol(source, abs)
   const message = err instanceof Error ? err.message : String(err)

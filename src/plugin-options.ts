@@ -1,7 +1,8 @@
 import type { Options } from 'prettier'
 import type { PrettierPluginOrganizeAttributesParserOptions } from 'prettier-plugin-organize-attributes'
 
-export interface WxmlPluginOptions extends Options, Partial<PrettierPluginOrganizeAttributesParserOptions> {
+export interface WxmlPluginOptions
+  extends Options, Partial<PrettierPluginOrganizeAttributesParserOptions> {
   /**
    * 是否严格模式（默认 `true`）。
    * 开启时：任一流水线阶段 HTML 解析失败（`wxml-html-parse-failed:`）、Vue 排版失败、插值收集/格式化失败、内联 wxs 合并/格式化失败、跨行属性折叠阶段解析失败均会抛错，且不会输出半格式化结果。关闭时：尽量保留可运行内容并跳过无法处理的部分；是否打印提示见 `wxmlFallbackLog`。

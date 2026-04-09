@@ -1,5 +1,13 @@
 # Changelog
 
+## prettier-plugin-wxml@0.1.0 (2026-04-09)
+
+> API 已基本稳定
+
+- 更新依赖
+
+---
+
 ## prettier-plugin-wxml@0.0.11 (2026-04-02)
 
 - 修复 style 折叠后未移除末尾分号的问题

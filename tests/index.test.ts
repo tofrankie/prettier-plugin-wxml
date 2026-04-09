@@ -57,12 +57,20 @@ async function formatRaw(source: string, opts: FormatOptions = {}) {
     ...(opts.wxmlFallbackLog !== undefined ? { wxmlFallbackLog: opts.wxmlFallbackLog } : {}),
     ...(opts.wxmlFormat !== undefined ? { wxmlFormat: opts.wxmlFormat } : {}),
     ...(opts.wxmlSelfClose !== undefined ? { wxmlSelfClose: opts.wxmlSelfClose } : {}),
-    ...(opts.wxmlSelfCloseExclude !== undefined ? { wxmlSelfCloseExclude: opts.wxmlSelfCloseExclude } : {}),
-    ...(opts.wxmlCollapseAttrsValue !== undefined ? { wxmlCollapseAttrsValue: opts.wxmlCollapseAttrsValue } : {}),
-    ...(opts.wxmlOrganizeAttributes !== undefined ? { wxmlOrganizeAttributes: opts.wxmlOrganizeAttributes } : {}),
+    ...(opts.wxmlSelfCloseExclude !== undefined
+      ? { wxmlSelfCloseExclude: opts.wxmlSelfCloseExclude }
+      : {}),
+    ...(opts.wxmlCollapseAttrsValue !== undefined
+      ? { wxmlCollapseAttrsValue: opts.wxmlCollapseAttrsValue }
+      : {}),
+    ...(opts.wxmlOrganizeAttributes !== undefined
+      ? { wxmlOrganizeAttributes: opts.wxmlOrganizeAttributes }
+      : {}),
     ...(opts.attributeSort !== undefined ? { attributeSort: opts.attributeSort } : {}),
     ...(opts.attributeGroups !== undefined ? { attributeGroups: opts.attributeGroups } : {}),
-    ...(opts.attributeIgnoreCase !== undefined ? { attributeIgnoreCase: opts.attributeIgnoreCase } : {}),
+    ...(opts.attributeIgnoreCase !== undefined
+      ? { attributeIgnoreCase: opts.attributeIgnoreCase }
+      : {}),
   })
 }
 
@@ -86,7 +94,9 @@ describe('prettier-plugin-wxml', () => {
       const expected = await readFile(join(base, 'output.wxml'), 'utf8')
       let fixtureOptions: FormatOptions = {}
       try {
-        fixtureOptions = JSON.parse(await readFile(join(base, 'options.json'), 'utf8')) as FormatOptions
+        fixtureOptions = JSON.parse(
+          await readFile(join(base, 'options.json'), 'utf8')
+        ) as FormatOptions
       } catch {
         // ignore missing options.json
       }
@@ -135,7 +145,9 @@ describe('prettier-plugin-wxml', () => {
   })
 
   it('同一属性值内多个插值', async () => {
-    expect(await format('<view data="{{a}}{{b}}"></view>')).toBe('<view data="{{ a }}{{ b }}"></view>')
+    expect(await format('<view data="{{a}}{{b}}"></view>')).toBe(
+      '<view data="{{ a }}{{ b }}"></view>'
+    )
   })
 
   it('同一属性值内多个插值（长度 > 150）', async () => {
@@ -146,11 +158,15 @@ describe('prettier-plugin-wxml', () => {
     expect(out).toContain('{{ firstValue + 1 }}')
     expect(out).toContain('{{ secondValue && thirdValue }}')
     expect(out).toContain('{{ user.profile?.nickname }}')
-    expect(out).toContain('prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-')
+    expect(out).toContain(
+      'prefix-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-'
+    )
   })
 
   it('算术与比较', async () => {
-    expect(await format('{{a+b*c-d/e%3}}')).toMatchInlineSnapshot('"{{ a + b * c - ((d / e) % 3) }}"')
+    expect(await format('{{a+b*c-d/e%3}}')).toMatchInlineSnapshot(
+      '"{{ a + b * c - ((d / e) % 3) }}"'
+    )
     expect(await format('{{a===b&&c||d}}')).toMatchInlineSnapshot('"{{ (a === b && c) || d }}"')
   })
 
@@ -179,7 +195,9 @@ describe('prettier-plugin-wxml', () => {
 
   it('函数与箭头函数', async () => {
     expect(await format('{{fn(a,b)}}')).toMatchInlineSnapshot('"{{ fn(a, b) }}"')
-    expect(await format('{{list.map(x=>x+1)}}')).toMatchInlineSnapshot('"{{ list.map(x => x + 1) }}"')
+    expect(await format('{{list.map(x=>x+1)}}')).toMatchInlineSnapshot(
+      '"{{ list.map(x => x + 1) }}"'
+    )
   })
 
   it('已规范输入保持稳定', async () => {
@@ -421,7 +439,8 @@ describe('prettier-plugin-wxml', () => {
   })
 
   it('默认使用 Vue parser：支持 Vue 风格模板格式化（含文本节点 mustache）', async () => {
-    const source = '<view class="notice text-light">{{a?1:2}}</view><view> {{ flag ? "x" : "y" }}</view>'
+    const source =
+      '<view class="notice text-light">{{a?1:2}}</view><view> {{ flag ? "x" : "y" }}</view>'
     const out = await format(source, {
       wxmlFormat: true,
     })

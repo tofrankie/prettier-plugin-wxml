@@ -19,7 +19,11 @@
 <view>{{ tool.dataFormatter(100) }}</view>
 
 <view class="container">
-  <custom-nav-bar background-color="transparent" front-color="white" scroll-background-color="#f11d18">
+  <custom-nav-bar
+    background-color="transparent"
+    front-color="white"
+    scroll-background-color="#f11d18"
+  >
     <image class="logo" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
   </custom-nav-bar>
 
@@ -30,13 +34,18 @@
       <view class="center card-title">我的会员编号</view>
       <view wx:if="{{ memberIdVisible }}" class="card-absolute">{{ userInfo.member_id }}</view>
       <view wx:else class="card-absolute card-empty" />
-      <image class="card-absolute card-rect-icon" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+      <image
+        class="card-absolute card-rect-icon"
+        src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World"
+      />
     </block>
     <block wx:else>
       <view class="card-relative card-member-id">会员编号：{{ userInfo.member_id || '-' }}</view>
       <view class="card-relative card-member-name">{{ userInfo.member_name || '-' }}</view>
       <view class="card-relative card-trade-union">{{ userInfo.trade_union || '-' }}</view>
-      <view class="card-relative card-identified-time">{{ userInfo.identityVerifiedAt || '-' }} 成为会员</view>
+      <view class="card-relative card-identified-time"
+        >{{ userInfo.identityVerifiedAt || '-' }} 成为会员</view
+      >
     </block>
 
     <image
@@ -53,16 +62,26 @@
           src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World"
         />
       </view>
-      <image class="card-scan-gif" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" />
+      <image
+        class="card-scan-gif"
+        src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World"
+      />
     </block>
   </view>
 
-  <view class="center main-btn {{ btnConfig.DISABLED ? 'main-btn-disabled' : '' }}" catchtap="{{ btnConfig.METHOD }}">
+  <view
+    class="center main-btn {{ btnConfig.DISABLED ? 'main-btn-disabled' : '' }}"
+    catchtap="{{ btnConfig.METHOD }}"
+  >
     {{ btnConfig.TEXT }}
   </view>
 
   <view class="rule-and-share">
-    <image class="rule" src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World" bindtap="navToRules" />
+    <image
+      class="rule"
+      src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World"
+      bindtap="navToRules"
+    />
     <image
       class="share"
       src="https://placehold.co/600x400/000000/FFFFFF?text=Hello+World"
